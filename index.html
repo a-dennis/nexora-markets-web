@@ -1,203 +1,287 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Nexora Markets - Nifty, Sensex, Intraday Stock Screener, World Markets, Mutual Funds</title>
-<meta name="description" content="Free, beginner-friendly Indian market dashboard: Nifty, Sensex, intraday stock screens, world markets, gold and crude, top mutual funds and news. Delayed data, information only.">
-<link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#0b1f2a"><link rel="icon" href="/icon-192.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nexora"><meta property="og:title" content="Nexora Markets"><meta property="og:description" content="Free beginner-friendly market dashboard for India and the world.">
+<html lang="en" data-theme="dark"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Nexora Markets - Indian stock market dashboard: Nifty, Sensex, stocks, F&O, IPO, FII/DII, mutual funds</title>
+<meta name="description" content="Free, beginner-friendly Indian market dashboard: live-style Nifty and Sensex, stock pages with financials, sectors, F&O, IPOs, FII/DII, results calendar, world markets, commodities and mutual funds. Delayed data.">
+<link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#070d14"><link rel="icon" href="/icon-192.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nexora">
+<meta property="og:title" content="Nexora Markets"><meta property="og:description" content="Free beginner-friendly market dashboard for India and the world.">
 <style>
-:root{--bg:#f4f6f9;--card:#fff;--ink:#101828;--mut:#667085;--line:#e4e7ec;--up:#047857;--dn:#c0262d;--brand:#0f766e;--upbg:#e6f6ef;--dnbg:#fdecec}
-*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
-header{background:#0b1f2a;color:#fff}.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0 8px;flex-wrap:wrap}
-.logo{font-weight:800;font-size:20px}.logo b{color:#2dd4bf}
-.status{font-size:13px;color:#cbd5e1;display:flex;gap:10px;align-items:center}
-.dot{width:9px;height:9px;border-radius:50%;background:#94a3b8;display:inline-block}.dot.open{background:#22c55e;box-shadow:0 0 0 4px #22c55e33}
-nav{display:flex;gap:4px;overflow-x:auto;padding-bottom:0}nav a{color:#cbd5e1;text-decoration:none;padding:9px 14px;font-size:14px;white-space:nowrap;border-bottom:3px solid transparent;cursor:pointer}
-nav a.on{color:#fff;border-color:#2dd4bf;font-weight:600}
-.delay{background:#fef3c7;color:#92400e;font-size:12.5px;padding:7px 12px;text-align:center}
-main{padding:8px 0 30px}section{display:none}section.on{display:block}
-h2{font-size:17px;margin:24px 0 4px;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px}h2 small{font-weight:400;color:var(--mut);font-size:12px}
-.how{color:var(--mut);font-size:13.5px;margin:0 0 10px}
-.grid{display:grid;gap:12px}.idx{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
-.ic .n{color:var(--mut);font-size:13px}.ic .p{font-size:21px;font-weight:700;margin:2px 0}
-.up{color:var(--up)}.dn{color:var(--dn)}.ic svg{width:100%;height:36px;margin-top:6px}
-.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}@media(max-width:760px){.two{grid-template-columns:1fr}}
-table{width:100%;border-collapse:collapse}td,th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;font-size:14px}
-th{font-size:12px;color:var(--mut);font-weight:600}td:first-child,th:first-child{text-align:left}tr:last-child td{border:0}
-.sym{font-weight:600}.sub{display:block;color:var(--mut);font-size:12px;font-weight:400;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-weight:600;font-size:13px}.pill.up{background:var(--upbg)}.pill.dn{background:var(--dnbg)}.pill.n{background:#eef2f6;color:#344054}
-.bar{height:10px;border-radius:6px;overflow:hidden;display:flex;background:var(--line);margin:8px 0 4px}.bar i{display:block;height:100%}
-.search{display:flex;position:relative;margin-bottom:10px}input{flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:#fff}
-.sug{position:absolute;top:44px;left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:10px;z-index:5;box-shadow:0 8px 24px #0001;max-height:260px;overflow:auto}
-.sug div{padding:9px 12px;cursor:pointer;font-size:14px}.sug div:hover{background:var(--bg)}
-button.x{border:0;background:none;color:var(--mut);cursor:pointer;font-size:16px}
-.news a{display:block;padding:11px 0;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}.news a:last-child{border:0}
-.news a:hover b{color:var(--brand)}.news span{color:var(--mut);font-size:12px}
-.empty{color:var(--mut);padding:14px 0;text-align:center;font-size:14px}
-.scr h3{margin:0 0 2px;font-size:15px}.scr .why{font-size:13px;color:var(--mut);margin:0 0 8px}
-.note{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:10px 12px;font-size:13.5px;margin:12px 0}
-.warn{background:#fff7ed;border:1px solid #fed7aa}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 13px;cursor:pointer;font-size:13px}.tabs button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
-.learn dt{font-weight:700;margin-top:12px}.learn dd{margin:2px 0 0;color:#344054}
-footer{color:var(--mut);font-size:12.5px;padding:10px 0 40px}footer p{margin:6px 0}
-.rk{color:var(--mut);font-weight:700;width:24px}
-
-.mom{background:linear-gradient(135deg,#0b1f2a,#134e4a);color:#fff;border:0;position:relative;overflow:hidden}
-.mom .tag{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:#5eead4;font-weight:700}
-.mom .big{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:6px 0}
-.mom .nm{font-size:26px;font-weight:800}.mom .nm small{display:block;font-size:13px;font-weight:400;color:#99f6e4}
-.mom .pr{font-size:22px;font-weight:700;text-align:right}.mom .pr span{display:block;font-size:14px}
-.mom ul{margin:6px 0 10px;padding-left:18px;font-size:13.5px;color:#d1fae5}
-.mom .meter{height:8px;background:#ffffff26;border-radius:6px;overflow:hidden;margin:6px 0 2px}.mom .meter i{display:block;height:100%;background:#2dd4bf}
-.mom .fine{font-size:11.5px;color:#a7f3d0;margin-top:8px;opacity:.9}
-.mom button{background:#2dd4bf;color:#042f2e;border:0;border-radius:999px;padding:7px 16px;font-weight:700;cursor:pointer;font-size:13px}
-.mom .up{color:#6ee7b7}.mom .dn{color:#fca5a5}
-.ad{border:1px dashed #cbd5e1;border-radius:10px;min-height:90px;display:flex;align-items:center;justify-content:center;color:#98a2b3;font-size:12px;margin:18px 0;background:#fafbfc;text-align:center}
-.pro{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fde68a;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
-.pro b{font-size:15px}.pro p{margin:2px 0 0;font-size:13px;color:#78350f}.pro button{background:#92400e;color:#fff;border:0;border-radius:999px;padding:8px 18px;font-weight:600;cursor:pointer}
-#inst{display:none;background:#2dd4bf;color:#042f2e;border:0;border-radius:999px;padding:5px 12px;font-weight:700;font-size:12px;cursor:pointer}
-.ic{transition:transform .15s}.ic:hover{transform:translateY(-2px);box-shadow:0 6px 18px #0000000f}
-@media(max-width:600px){.mom .nm{font-size:22px}body{font-size:14.5px}.idx{grid-template-columns:1fr 1fr}.ic .p{font-size:18px}}
-@media(display-mode:standalone){.delay{position:sticky;top:0;z-index:9}}
+:root{--bg:#070d14;--bg2:#0c1622;--card:#101c2b;--card2:#142338;--ink:#e8eef6;--mut:#8a9bb0;--line:#1e2f45;--up:#22c55e;--dn:#f43f5e;--brand:#2dd4bf;--brand2:#38bdf8;--upbg:#22c55e1f;--dnbg:#f43f5e1f;--shadow:0 8px 30px #0006;--r:16px}
+[data-theme=light]{--bg:#f3f6fb;--bg2:#e9eff7;--card:#fff;--card2:#f6f9fd;--ink:#0f1b2d;--mut:#62748c;--line:#e0e8f2;--up:#0f9d58;--dn:#d93a4f;--brand:#0d9488;--brand2:#0284c7;--upbg:#0f9d581a;--dnbg:#d93a4f1a;--shadow:0 6px 24px #1e3a5f14}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font:15px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;padding-bottom:78px}
+a{color:inherit}.wrap{max-width:1240px;margin:0 auto;padding:0 16px}
+header{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:14px;padding:11px 0}
+.logo{font-weight:800;font-size:19px;letter-spacing:.2px;cursor:pointer;white-space:nowrap}.logo b{background:linear-gradient(90deg,var(--brand),var(--brand2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sbox{position:relative;flex:1;max-width:460px}.sbox input{width:100%;padding:10px 14px 10px 38px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:14px;outline:0}.sbox input:focus{border-color:var(--brand)}
+.sbox:before{content:"\1F50D";position:absolute;left:13px;top:8px;font-size:14px;opacity:.6}
+.sug{position:absolute;top:44px;left:0;right:0;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);max-height:320px;overflow:auto;z-index:60}
+.sug div{padding:10px 14px;cursor:pointer;font-size:14px;border-bottom:1px solid var(--line)}.sug div:hover{background:var(--card2)}.sug small{color:var(--mut)}
+.right{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--mut);white-space:nowrap}
+.dot{width:9px;height:9px;border-radius:50%;background:#64748b;display:inline-block}.dot.open{background:var(--up);box-shadow:0 0 0 4px #22c55e33}
+.ib{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 11px;cursor:pointer;font-size:13px}
+#inst{display:none;background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04202a;border:0;font-weight:700}
+nav.main{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;padding-bottom:6px}nav.main a{padding:7px 13px;border-radius:999px;font-size:13.5px;white-space:nowrap;color:var(--mut);cursor:pointer;text-decoration:none}
+nav.main a:hover{color:var(--ink)}nav.main a.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:inset 0 0 0 1px var(--line)}
+.ticker{background:var(--bg2);border-bottom:1px solid var(--line);overflow:hidden;white-space:nowrap;font-size:13px}.ticker div{display:inline-block;padding:7px 0;animation:mq 60s linear infinite}.ticker:hover div{animation-play-state:paused}.ticker span{margin:0 18px}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.delay{background:linear-gradient(90deg,#f59e0b22,#f59e0b11);color:#f59e0b;font-size:12.5px;padding:6px 12px;text-align:center;border-bottom:1px solid var(--line)}
+[data-theme=light] .delay{color:#92400e}
+main{padding:6px 0 24px;min-height:70vh}
+h1{font-size:22px;margin:20px 0 4px}h2{font-size:17px;margin:26px 0 8px;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px}h2 small,.sm{font-weight:400;color:var(--mut);font-size:12px}
+.how{color:var(--mut);font-size:13.5px;margin:0 0 12px}
+.grid{display:grid;gap:12px}.g4{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}.g3{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}.g2{grid-template-columns:1fr 1fr}@media(max-width:820px){.g2{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px;box-shadow:var(--shadow)}
+.ic{cursor:pointer;transition:transform .15s,border-color .15s}.ic:hover{transform:translateY(-3px);border-color:var(--brand)}.ic .n{color:var(--mut);font-size:13px}.ic .p{font-size:22px;font-weight:700;margin:2px 0;letter-spacing:-.3px}.ic svg{width:100%;height:40px;margin-top:6px}
+.up{color:var(--up)}.dn{color:var(--dn)}
+table{width:100%;border-collapse:collapse}td,th{padding:9px 6px;border-bottom:1px solid var(--line);text-align:right;font-size:14px}th{font-size:11.5px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}td:first-child,th:first-child{text-align:left}tr:last-child td{border:0}
+tbody tr.lk{cursor:pointer}tbody tr.lk:hover{background:var(--card2)}.sym{font-weight:600}.sub{display:block;color:var(--mut);font-size:12px;font-weight:400;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.scroll{overflow-x:auto}.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-weight:600;font-size:13px}.pill.up{background:var(--upbg)}.pill.dn{background:var(--dnbg)}.pill.n{background:var(--card2);color:var(--mut)}
+.bar{height:9px;border-radius:6px;overflow:hidden;display:flex;background:var(--line);margin:8px 0 4px}.bar i{display:block;height:100%}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 12px}.tabs button{border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:999px;padding:5px 13px;cursor:pointer;font-size:13px}.tabs button.on{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#04202a;border-color:transparent;font-weight:700}
+.empty{color:var(--mut);padding:16px 0;text-align:center;font-size:14px}
+.mom{background:linear-gradient(135deg,#0f2a3a,#0d3b3a 60%,#14504a);color:#fff;border:1px solid #2dd4bf33}[data-theme=light] .mom{background:linear-gradient(135deg,#0b3b4a,#0f766e)}
+.mom .tag{font-size:11px;letter-spacing:.9px;text-transform:uppercase;color:#5eead4;font-weight:700;display:flex;justify-content:space-between}
+.mom .big{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:6px 0;cursor:pointer}.mom .nm{font-size:25px;font-weight:800;letter-spacing:-.4px}.mom .nm small{display:block;font-size:12.5px;font-weight:400;color:#99f6e4}
+.mom .pr{font-size:21px;font-weight:700;text-align:right}.mom .pr span{display:block;font-size:14px}.mom ul{margin:6px 0 10px;padding-left:18px;font-size:13px;color:#d1fae5}
+.mom .meter{height:7px;background:#ffffff26;border-radius:6px;overflow:hidden;margin:6px 0 2px}.mom .meter i{display:block;height:100%;background:linear-gradient(90deg,#2dd4bf,#38bdf8)}
+.mom .fine{font-size:11px;color:#a7f3d0;margin-top:8px;opacity:.85}.mom button{background:#2dd4bf;color:#042f2e;border:0;border-radius:999px;padding:6px 14px;font-weight:700;cursor:pointer;font-size:12.5px}.mom .up{color:#6ee7b7}.mom .dn{color:#fda4af}
+.ad{border:1px dashed var(--line);border-radius:12px;min-height:90px;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:11.5px;margin:18px 0;text-align:center;background:var(--card2)}
+.aff{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;border:0}.aff b{font-size:15px}.aff p{margin:2px 0 0;font-size:12.5px;color:#c7d2fe}.aff a,.pro button,.aff button{background:#fff;color:#312e81;border:0;border-radius:999px;padding:8px 16px;font-weight:700;cursor:pointer;text-decoration:none;font-size:13px}
+.pro{background:linear-gradient(135deg,#78350f,#b45309);color:#fff;border:0;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.pro b{font-size:15px}.pro p{margin:2px 0 0;font-size:12.5px;color:#fde68a}.pro button{color:#78350f}
+.note{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 13px;font-size:13px;margin:12px 0;color:var(--mut)}.warn{border-color:#f59e0b66;background:#f59e0b14;color:#f59e0b}[data-theme=light] .warn{color:#92400e}
+.heat{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}.hc{border-radius:12px;padding:10px 12px;cursor:default;color:#fff;font-size:12.5px;min-height:70px}.hc b{display:block;font-size:13px}.hc span{font-size:17px;font-weight:700}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.kv div{background:var(--card2);border-radius:12px;padding:10px 12px}.kv small{display:block;color:var(--mut);font-size:11.5px}.kv b{font-size:15px}
+.range{height:6px;background:var(--line);border-radius:4px;position:relative;margin:6px 0 4px}.range i{position:absolute;top:-4px;width:3px;height:14px;background:var(--brand);border-radius:2px}
+.chart{width:100%;height:280px;display:block;touch-action:none}.tt{font-size:12.5px;color:var(--mut);height:18px}
+.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}.hero .px{font-size:34px;font-weight:800;letter-spacing:-.8px}.hero h1{margin:6px 0 0}
+.oi{display:inline-block;height:8px;border-radius:3px;vertical-align:middle}.ce{background:var(--dn)}.pe{background:var(--up)}tr.atm td{background:var(--card2);font-weight:700}
+.news a{display:block;padding:11px 0;border-bottom:1px solid var(--line);text-decoration:none}.news a:last-child{border:0}.news a:hover b{color:var(--brand)}.news span{color:var(--mut);font-size:12px}
+.learn dt{font-weight:700;margin-top:12px}.learn dd{margin:2px 0 0;color:var(--mut)}
+.bn{position:fixed;bottom:0;left:0;right:0;z-index:55;display:flex;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+.bn a{flex:1;text-align:center;font-size:11px;color:var(--mut);padding:4px 0;cursor:pointer;text-decoration:none}.bn a i{display:block;font-style:normal;font-size:20px}.bn a.on{color:var(--brand)}
+.sheet{position:fixed;inset:0;z-index:70;background:#000a;display:none}.sheet.on{display:block}.sheet>div{position:absolute;bottom:0;left:0;right:0;background:var(--card);border-radius:20px 20px 0 0;padding:16px;max-height:80vh;overflow:auto}.sheet a{display:block;padding:12px;border-bottom:1px solid var(--line);cursor:pointer;text-decoration:none}
+footer{color:var(--mut);font-size:12px;padding:10px 0 30px}footer p{margin:6px 0}
+@media(min-width:900px){body{padding-bottom:0}.bn{display:none}}
+@media(max-width:899px){nav.main{display:none}.right .hide{display:none}}
+@media(max-width:600px){.g4{grid-template-columns:1fr 1fr}.ic .p{font-size:18px}.hero .px{font-size:28px}.logo{font-size:17px}.mom .nm{font-size:21px}}
+.skel{height:80px;border-radius:14px;background:linear-gradient(90deg,var(--card),var(--card2),var(--card));background-size:200% 100%;animation:sk 1.2s infinite}@keyframes sk{to{background-position:-200% 0}}
 </style></head><body>
-<header><div class="wrap"><div class="top"><div class="logo">Nexora <b>Markets</b></div>
-<div class="status"><span class="dot" id="dot"></span><span id="mstat">Market</span><span id="upd"></span><button id="inst">Install app</button></div></div>
-<nav id="nav"><a data-t="home" class="on">Overview</a><a data-t="ideas">Intraday screens</a><a data-t="world">World & commodities</a><a data-t="funds">Mutual funds</a><a data-t="watch">Watchlist</a><a data-t="news">News</a><a data-t="learn">Learn</a></nav></div></header>
-<div class="delay">Data is delayed (up to 15 minutes or more) and shown for information only. Nothing here is a recommendation to buy or sell.</div>
-<main class="wrap">
-
-<section id="t-home" class="on">
-<h2 style="margin-top:14px">Top momentum stock <small>Nifty 50 scan</small></h2><div class="card mom" id="mom"><div class="tag">Momentum watchlist pick</div><div class="empty" style="color:#99f6e4">Scanning Nifty 50...</div></div>
-<h2>Indian indices <small id="u1"></small></h2><p class="how">An index is a scoreboard for a group of big companies. Nifty 50 tracks 50 large NSE companies. Sensex tracks 30 large BSE companies. Green means up from yesterday's close, red means down.</p>
-<div class="grid idx" id="idx"></div>
-<div class="card pro"><div><b>Nexora Pro (coming soon)</b><p>Price alerts, more stocks in the screens, saved screens and an ad-free view.</p></div><button onclick="alert('Pro is coming soon. We will announce it here.')">Notify me</button></div>
-<h2>How many stocks are up today? <small>Nifty 50 stocks</small></h2>
-<div class="card"><div class="bar" id="bar"></div><div id="breadth" style="font-size:13px;color:var(--mut)"></div><div id="mood" style="margin-top:6px;font-size:14px"></div></div>
-<div class="grid two">
-<div><h2>Top gainers <small>rose the most</small></h2><div class="card" id="gain"></div></div>
-<div><h2>Top losers <small>fell the most</small></h2><div class="card" id="lose"></div></div></div>
-<div class="ad" data-slot="home-mid">Advertisement</div>
-<h2>Most active <small>most money traded</small></h2><p class="how">Heavily traded stocks have many buyers and sellers, so you can enter and exit easily.</p><div class="card" id="act"></div>
-</section>
-
-<section id="t-ideas">
-<h2>Intraday screens <small id="u2"></small></h2>
-<div class="note warn"><b>Read this first.</b> These screens only <i>sort</i> today's Nifty 50 stocks by simple rules. They are not buy or sell signals and do not predict anything. Intraday trading is risky and most beginners lose money. Learn first, practise with small amounts, and never trade money you cannot afford to lose.</div>
-<div class="ad" data-slot="intraday-top">Advertisement</div><div class="grid three scr" id="scr"><div class="empty">Loading...</div></div>
-</section>
-
-<section id="t-world">
-<h2>World markets <small id="u3"></small></h2><p class="how">Overseas markets often set the mood for India's next morning. If US markets fell last night, Indian markets often open weak, and the other way round.</p>
-<div class="grid idx" id="world"></div>
-<h2>Commodities, currency and crypto</h2><p class="how">Gold and silver are metals people buy as a safe store of value. Crude oil prices affect petrol costs and inflation. A weaker rupee (higher USD/INR) makes imports costlier.</p>
-<div class="grid idx" id="commod"></div>
-</section>
-
-<section id="t-funds">
-<h2>Top mutual funds <small id="u4"></small></h2>
-<p class="how">A mutual fund pools money from many people and a professional manager invests it. Funds are ranked here inside each category by 3-year yearly return (CAGR), using official AMFI NAV data. Only Direct Growth plans are shown. Past returns do not guarantee future returns.</p>
-<div class="tabs" id="ftabs"></div><div id="funds"><div class="empty">Loading...</div></div>
-<div class="note">Tip: a SIP (monthly auto-investment) in a diversified fund is the common beginner route. Check risk level and your time horizon before picking. This list is information, not advice.</div>
-</section>
-
-<section id="t-watch">
-<h2>My watchlist <small>saved on this device only</small></h2><p class="how">Add stocks you want to keep an eye on. Search by company name.</p>
-<div class="card"><div class="search"><input id="q" placeholder="Search a stock, e.g. Tata Motors" autocomplete="off"><div class="sug" id="sug" hidden></div></div><div id="wl"></div></div>
-</section>
-
-<section id="t-news"><div class="ad" data-slot="news-top">Advertisement</div><h2>Market news <small>Economic Times, Google News</small></h2><div class="card news" id="news"><div class="empty">Loading...</div></div></section>
-
-<section id="t-learn"><h2>Market basics in plain words</h2>
-<div class="card"><dl class="learn">
-<dt>Nifty 50 and Sensex</dt><dd>Two scoreboards. When most big companies rise, they rise.</dd>
-<dt>Gainers and losers</dt><dd>Stocks that rose or fell the most compared with yesterday's closing price.</dd>
-<dt>Day high and day low</dt><dd>The highest and lowest price a stock touched today. A stock near its high shows buyers are in control today. Near its low, sellers are.</dd>
-<dt>Volume and "volume buzz"</dt><dd>Volume is how many shares changed hands. Volume buzz compares it with the usual amount at the same time of day. 2x means twice the normal activity.</dd>
-<dt>Gap up / gap down</dt><dd>When a stock opens well above or below yesterday's close, often after news. Gaps can shrink or grow during the day.</dd>
-<dt>Intraday range</dt><dd>How far a stock moved from low to high today. Bigger range means bigger risk and bigger possible swings both ways.</dd>
-<dt>Intraday trading</dt><dd>Buying and selling the same day. It is fast and risky. Stop-losses (a pre-set exit price) limit damage but do not remove risk.</dd>
-<dt>NAV</dt><dd>Net Asset Value: the price of one unit of a mutual fund.</dd>
-<dt>CAGR</dt><dd>Average yearly growth rate over several years. 15% CAGR for 3 years means the money grew about 15% each year.</dd>
-<dt>SIP</dt><dd>Systematic Investment Plan: investing a fixed amount every month.</dd>
-<dt>VIX</dt><dd>The fear gauge. A high India VIX means traders expect big swings.</dd>
-</dl></div></section>
-</main>
+<header><div class="wrap"><div class="top"><div class="logo" onclick="go('home')">Nexora <b>Markets</b></div>
+<div class="sbox"><input id="q" placeholder="Search stocks, e.g. Reliance, TCS" autocomplete="off"><div class="sug" id="sug" hidden></div></div>
+<div class="right"><span class="dot" id="dot"></span><span id="mstat" class="hide">Market</span><button class="ib" id="th" title="Dark / light">◐</button><button class="ib" id="inst">Install</button></div></div>
+<nav class="main" id="nav"></nav></div></header>
+<div class="ticker" id="tick"><div></div></div>
+<div class="delay">Data is delayed and for information only. Nothing here is a recommendation to buy or sell.</div>
+<main class="wrap" id="app"></main>
 <footer class="wrap">
-<p>Nexora Markets shows prices from public sources (Yahoo Finance), mutual fund NAVs from AMFI via mfapi.in, and headlines from Economic Times and Google News. Quotes are delayed and may be inaccurate or unavailable. Screens and rankings are automatic and informational only, not investment advice or a recommendation. Nexora is not a SEBI registered investment adviser or research analyst. Investments in securities are subject to market risk. Do your own research or consult a registered adviser.</p>
-<p>&copy; Nexora</p></footer>
+<p>Nexora Markets shows prices and company data from public sources (NSE India public pages, Yahoo Finance), mutual fund NAVs from AMFI via mfapi.in, and headlines from Economic Times and Google News (linked, not copied). Quotes are delayed and may be inaccurate or unavailable. Screens, momentum picks and rankings are produced automatically from simple rules. They are information only, not investment advice, a recommendation or a prediction. Nexora is not a SEBI registered investment adviser or research analyst. Investments in securities are subject to market risk. Do your own research or consult a registered adviser.</p>
+<p>&copy; Nexora &middot; <a href="#/learn">Learn the basics</a></p></footer>
+<div class="bn" id="bn"></div><div class="sheet" id="sheet"><div id="sheetc"></div></div>
 <script>
 const $=id=>document.getElementById(id);
-const f=(n,d=2)=>n==null?'-':Number(n).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
-const sgn=n=>n>=0?'up':'dn',arrow=n=>n>=0?'▲':'▼';
-const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function spark(a,up){if(!a||a.length<2)return'';const mn=Math.min(...a),mx=Math.max(...a),w=200,h=36,r=(mx-mn)||1;
-const p=a.map((v,i)=>(i/(a.length-1)*w).toFixed(1)+','+(h-2-(v-mn)/r*(h-4)).toFixed(1)).join(' ');
-return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="${up?'#047857':'#c0262d'}" stroke-width="1.8" points="${p}"/></svg>`}
-function isOpen(){const n=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));const d=n.getDay(),m=n.getHours()*60+n.getMinutes();return d>0&&d<6&&m>=555&&m<930}
-function setStatus(){const o=isOpen();$('dot').className='dot'+(o?' open':'');$('mstat').textContent=o?'NSE open':'NSE closed (showing last session)'}
-function ist(t){return t?new Date(t*1000).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+' IST':''}
-async function j(u){const r=await fetch(u);if(!r.ok)throw 0;return r.json()}
-const asof=t=>t?'Updated '+ist(t):'';
-function card(x){const s=sgn(x.change||0);return `<div class="card ic"><div class="n">${esc(x.name)}</div><div class="p">${f(x.price)}</div><div class="${s}">${arrow(x.change||0)} ${f(Math.abs(x.change||0))} (${f(Math.abs(x.pct||0))}%)</div>${spark(x.spark,s==='up')}</div>`}
-const pill=p=>`<span class="pill ${sgn(p)}">${p>=0?'+':''}${f(p)}%</span>`;
-function rows(a){return `<table><tr><th>Stock</th><th>Price</th><th>Change</th></tr>`+a.map(x=>`<tr><td class="sym">${x.symbol}<span class="sub">${esc(x.name)}</span></td><td>${f(x.price)}</td><td>${pill(x.pct)}</td></tr>`).join('')+'</table>'}
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=v=>v==null||v===''||isNaN(+v)?null:+v;
+const f=(n,d=2)=>num(n)==null?'-':(+n).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
+const sgn=n=>(n||0)>=0?'up':'dn',arrow=n=>(n||0)>=0?'▲':'▼';
+const pill=p=>num(p)==null?'-':`<span class="pill ${sgn(p)}">${p>=0?'+':''}${f(p)}%</span>`;
+const cr=n=>{n=num(n);if(n==null)return'-';const a=Math.abs(n),s=n<0?'-':'';if(a>=1e12)return s+'₹'+f(a/1e12)+' L Cr';if(a>=1e7)return s+'₹'+f(a/1e7,a>=1e9?0:2)+' Cr';if(a>=1e5)return s+'₹'+f(a/1e5)+' L';return s+'₹'+f(a,0)};
+const big=n=>{n=num(n);if(n==null)return'-';const a=Math.abs(n);return (n<0?'-':'')+(a>=1e12?f(a/1e12)+'T':a>=1e9?f(a/1e9)+'B':a>=1e6?f(a/1e6)+'M':a>=1e3?f(a/1e3)+'K':f(a,0))};
+const vol=n=>big(n);
 const un='<div class="empty">Data unavailable right now. Retrying...</div>';
-async function loadIdx(){try{const d=await j('/api/indices');
-$('idx').innerHTML=d.india.map(card).join('')||un;$('world').innerHTML=d.world.map(card).join('')||un;$('commod').innerHTML=d.commod.map(card).join('')||un;
-['u1','u3'].forEach(i=>$(i).textContent=asof(d.asof))}catch(e){$('idx').innerHTML=un}}
-async function loadMov(){try{const d=await j('/api/movers');if(!d.count)throw 0;$('gain').innerHTML=rows(d.gainers);$('lose').innerHTML=rows(d.losers);$('act').innerHTML=rows(d.active);
-const a=d.advances,b=d.declines,t=a+b;$('bar').innerHTML=`<i style="width:${a/t*100}%;background:var(--up)"></i><i style="width:${b/t*100}%;background:var(--dn)"></i>`;
-$('breadth').innerHTML=`<b class="up">${a} up</b> &middot; <b class="dn">${b} down</b> of ${t} stocks`;
-const r=a/t;$('mood').textContent=r>.65?'Most big stocks are rising. The mood is positive.':r<.35?'Most big stocks are falling. The mood is negative.':'Mixed day. Gains and losses are fairly balanced.'}catch(e){['gain','lose','act'].forEach(i=>$(i).innerHTML=un)}}
-const SC=[['near_high','Trading near today\'s high','Up on the day and within 0.4% of the high. Buyers are in control so far.',x=>`${pill(x.pct)}`],
-['near_low','Trading near today\'s low','Down on the day and within 0.4% of the low. Sellers are in control so far.',x=>`${pill(x.pct)}`],
-['volume','Volume buzz','Trading at least 1.3x its usual volume for this time of day. Something may be drawing attention.',x=>`<span class="pill n">${f(x.vratio,1)}x vol</span>`],
-['gap_up','Gap up at open','Opened at least 0.8% above yesterday\'s close. Often follows news.',x=>`<span class="pill up">gap +${f(x.gap)}%</span>`],
-['gap_down','Gap down at open','Opened at least 0.8% below yesterday\'s close. Often follows news.',x=>`<span class="pill dn">gap ${f(x.gap)}%</span>`],
-['volatile','Widest range today','Biggest gap between today\'s low and high. More movement means more risk both ways.',x=>`<span class="pill n">range ${f(x.range)}%</span>`]];
-async function loadScr(){try{const d=await j('/api/screens');$('u2').textContent=asof(d.asof)+(d.day?' - session '+d.day:'');
-$('scr').innerHTML=SC.map(([k,t,w,fn])=>{const a=d.s[k]||[];return `<div class="card"><h3>${t}</h3><p class="why">${w}</p>`+(a.length?'<table>'+a.map(x=>`<tr><td class="sym">${x.symbol}<span class="sub">${f(x.price)}</span></td><td>${fn(x)}</td><td>${pill(x.pct)}</td></tr>`).join('')+'</table>':'<div class="empty">No stock matches right now.</div>')+'</div>'}).join('')}catch(e){$('scr').innerHTML=un}}
-let FD=null,fc=null;
-async function loadFunds(){try{FD=await j('/api/funds');$('u4').textContent=FD.asof?'NAVs as of latest AMFI update':'';if(!fc)fc=FD.categories[0]&&FD.categories[0].category;drawFunds()}catch(e){$('funds').innerHTML=un}}
-function drawFunds(){if(!FD||!FD.categories.length){$('funds').innerHTML=un;return}
-$('ftabs').innerHTML=FD.categories.map(c=>`<button class="${c.category===fc?'on':''}" data-c="${esc(c.category)}">${esc(c.category)}</button>`).join('');
-const c=FD.categories.find(x=>x.category===fc)||FD.categories[0];
-const rc=v=>v==null?'<td>-</td>':`<td class="${v>=0?'up':'dn'}">${f(v,1)}%</td>`;
-$('funds').innerHTML=`<div class="card"><p class="how" style="margin-top:0"><b>${esc(c.category)}.</b> ${esc(c.risk)}</p><table><tr><th>#  Fund</th><th>1Y</th><th>3Y/yr</th><th>5Y/yr</th><th>NAV</th></tr>`+c.funds.map((x,i)=>`<tr><td><span class="rk">${i+1}</span><span class="sym">${esc(x.name)}</span><span class="sub" style="margin-left:24px;max-width:260px">${esc(x.house)}</span></td>${rc(x.r1)}${rc(x.r3)}${rc(x.r5)}<td>${f(x.nav)}</td></tr>`).join('')+'</table></div>'}
-$('ftabs').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(b){fc=b.dataset.c;drawFunds()}});
-async function loadNews(){try{const d=await j('/api/news');$('news').innerHTML=d.slice(0,25).map(n=>`<a href="${esc(n.link)}" target="_blank" rel="noopener nofollow"><b>${esc(n.title)}</b><br><span>${esc(n.source)} &middot; ${n.ts?ist(n.ts):''}</span></a>`).join('')||'<div class="empty">No news right now.</div>'}catch(e){$('news').innerHTML='<div class="empty">News unavailable right now.</div>'}}
-const KEY='nexora_wl';let wl=[];try{wl=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){}
-if(!wl.length)wl=['RELIANCE.NS','TCS.NS','HDFCBANK.NS','INFY.NS'];
-function save(){try{localStorage.setItem(KEY,JSON.stringify(wl))}catch(e){}}
-async function loadWl(){if(!wl.length){$('wl').innerHTML='<div class="empty">Search above to add stocks.</div>';return}
-try{const d=await j('/api/quote?s='+encodeURIComponent(wl.join(',')));const m={};d.forEach(x=>m[x.symbol]=x);
-$('wl').innerHTML='<table><tr><th>Stock</th><th>Price</th><th>Change</th><th></th></tr>'+wl.map(s=>{const x=m[s],n=s.replace('.NS','').replace('.BO','');
-return x?`<tr><td class="sym">${n}<span class="sub">${esc(x.name)}</span></td><td>${f(x.price)}</td><td>${pill(x.pct)}</td><td><button class="x" onclick="rm('${s}')" title="Remove">✕</button></td></tr>`:`<tr><td class="sym">${n}</td><td colspan="2" style="color:var(--mut)">unavailable</td><td><button class="x" onclick="rm('${s}')">✕</button></td></tr>`}).join('')+'</table>'}catch(e){$('wl').innerHTML=un}}
-window.rm=s=>{wl=wl.filter(x=>x!==s);save();loadWl()};
+const skel=n=>Array(n||3).fill('<div class="skel"></div>').join('');
+async function j(u){const r=await fetch(u);if(!r.ok)throw 0;return r.json()}
+function ist(t){return t?new Date(t*1000).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+' IST':''}
+function isOpen(){const n=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));const d=n.getDay(),m=n.getHours()*60+n.getMinutes();return d>0&&d<6&&m>=555&&m<930}
+function setStatus(){const o=isOpen();$('dot').className='dot'+(o?' open':'');$('mstat').textContent=o?'NSE open':'NSE closed'}
+function spark(a,up,h){if(!a||a.length<2)return'';const mn=Math.min(...a),mx=Math.max(...a),w=200,H=h||40,r=(mx-mn)||1;const p=a.map((v,i)=>(i/(a.length-1)*w).toFixed(1)+','+(H-3-(v-mn)/r*(H-6)).toFixed(1));const c=up?'var(--up)':'var(--dn)';return `<svg viewBox="0 0 ${w} ${H}" preserveAspectRatio="none"><polygon fill="${c}" opacity=".12" points="0,${H} ${p.join(' ')} ${w},${H}"/><polyline fill="none" stroke="${c}" stroke-width="1.8" points="${p.join(' ')}"/></svg>`}
+/* theme */
+(function(){const t=localStorage.getItem('nx_theme')||'dark';document.documentElement.dataset.theme=t;})();
+$('th').onclick=()=>{const t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;localStorage.setItem('nx_theme',t);document.querySelector('meta[name=theme-color]').content=t==='dark'?'#070d14':'#f3f6fb'};
+/* nav */
+const PAGES=[['home','Home','🏠'],['markets','Markets','📊'],['screens','Screens','🎯'],['fno','F&O','⚙️'],['ipo','IPO','🚀'],['fiidii','FII / DII','🏦'],['calendar','Calendar','📅'],['world','World','🌍'],['commodities','Commodities','🛢️'],['funds','Mutual funds','💼'],['watch','Watchlist','⭐'],['news','News','📰'],['learn','Learn','🎓']];
+$('nav').innerHTML=PAGES.map(p=>`<a data-p="${p[0]}" onclick="go('${p[0]}')">${p[1]}</a>`).join('');
+const BN=[['home','Home','🏠'],['markets','Markets','📊'],['screens','Screens','🎯'],['funds','Funds','💼']];
+$('bn').innerHTML=BN.map(p=>`<a data-p="${p[0]}" onclick="go('${p[0]}')"><i>${p[2]}</i>${p[1]}</a>`).join('')+`<a onclick="openMore()"><i>☰</i>More</a>`;
+window.openMore=()=>{$('sheetc').innerHTML=PAGES.map(p=>`<a onclick="go('${p[0]}');$('sheet').classList.remove('on')">${p[2]} &nbsp;${p[1]}</a>`).join('');$('sheet').classList.add('on')};
+$('sheet').onclick=e=>{if(e.target.id==='sheet')$('sheet').classList.remove('on')};
+window.go=p=>{location.hash='#/'+p};
+/* search */
 let tm;$('q').addEventListener('input',e=>{clearTimeout(tm);const v=e.target.value.trim();if(v.length<2){$('sug').hidden=true;return}
-tm=setTimeout(async()=>{try{const d=await j('/api/search?q='+encodeURIComponent(v));$('sug').innerHTML=d.length?d.map(x=>`<div data-s="${esc(x.symbol)}"><b>${esc(x.symbol.replace('.NS','').replace('.BO',''))}</b> ${esc(x.name)} <span style="color:var(--mut)">${esc(x.exch)}</span></div>`).join(''):'<div>No match</div>';$('sug').hidden=false}catch(e){}},300)});
-$('sug').addEventListener('click',e=>{const d=e.target.closest('[data-s]');if(!d)return;const s=d.dataset.s;if(!wl.includes(s))wl.push(s);save();$('q').value='';$('sug').hidden=true;loadWl()});
-function show(t){document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==='t-'+t));document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('on',a.dataset.t===t));history.replaceState(null,'','#'+t)}
-$('nav').addEventListener('click',e=>{const a=e.target.closest('a');if(a)show(a.dataset.t)});
-const h=location.hash.slice(1);if(h&&$('t-'+h))show(h);
-
-let HOLD=null;try{HOLD=JSON.parse(localStorage.getItem('nx_mom'))}catch(e){}
-let MOM=null;
-function drawMom(){const el=$('mom');if(!MOM||!MOM.list.length){el.innerHTML='<div class="tag">Momentum watchlist pick</div><div class="empty" style="color:#99f6e4">No stock shows strong momentum right now. Try again when the market is open.</div>';return}
-if(!HOLD||!MOM.list.find(x=>x.symbol===HOLD.symbol)&&!HOLD.keep){HOLD={symbol:MOM.list[0].symbol,at:Date.now()};try{localStorage.setItem('nx_mom',JSON.stringify(HOLD))}catch(e){}}
-let x=MOM.list.find(y=>y.symbol===HOLD.symbol)||MOM.list[0];
-const s=sgn(x.pct);
-el.innerHTML=`<div class="tag">Momentum watchlist pick</div><div class="big"><div class="nm">${esc(x.symbol)}<small>${esc(x.name)}</small></div><div class="pr">${f(x.price)}<span class="${s}">${x.pct>=0?'▲ +':'▼ '}${f(x.pct)}%</span></div></div>
-<div style="font-size:12px;color:#99f6e4">Momentum score ${x.score}/100</div><div class="meter"><i style="width:${x.score}%"></i></div>
-<ul>${x.reasons.map(r=>`<li>${esc(r)}</li>`).join('')||'<li>Ranks highest on a mix of volume, gap and closeness to day high</li>'}</ul>
-<button onclick="refreshMom()">Refresh pick</button> <span style="font-size:12px;color:#99f6e4;margin-left:6px">Held since ${new Date(HOLD.at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}. It stays until you tap refresh.</span>
-<div class="fine">A momentum pick is a stock that scores highest on simple rules (volume, opening gap, closeness to today's high). It is a watchlist idea to study, not a buy or sell signal or a prediction. Delayed data. Intraday trading carries high risk.</div>`}
-window.refreshMom=async()=>{HOLD=null;await loadMom()};
-async function loadMom(){try{MOM=await j('/api/momentum');drawMom()}catch(e){$('mom').innerHTML='<div class="tag">Momentum watchlist pick</div>'+un}}
+tm=setTimeout(async()=>{try{const d=await j('/api/search?q='+encodeURIComponent(v));$('sug').innerHTML=d.length?d.map(x=>`<div data-s="${esc(x.symbol.replace('.NS','').replace('.BO',''))}"><b>${esc(x.symbol.replace('.NS','').replace('.BO',''))}</b> ${esc(x.name)} <small>${esc(x.exch)}</small></div>`).join(''):'<div>No match</div>';$('sug').hidden=false}catch(e){}},280)});
+$('sug').addEventListener('click',e=>{const d=e.target.closest('[data-s]');if(!d)return;$('q').value='';$('sug').hidden=true;location.hash='#/stock/'+d.dataset.s});
+document.addEventListener('click',e=>{if(!e.target.closest('.sbox'))$('sug').hidden=true});
+/* shared UI */
+const AD=(s)=>`<div class="ad" data-slot="${s}">Advertisement</div>`;
+const AFF=`<div class="card aff"><div><b>Open a free demat account</b><p>Partner offer placeholder. Compare brokers by fees before you choose. Nexora may earn a commission.</p></div><a href="#/learn">Learn first</a></div>`;
+const PRO=`<div class="card pro"><div><b>Nexora Pro (coming soon)</b><p>Price alerts, saved screens, more stocks in every scan and an ad-free view.</p></div><button onclick="alert('Pro is coming soon. We will announce it here.')">Notify me</button></div>`;
+function idxCard(x,link){const s=sgn(x.change);return `<div class="card ic" ${link?`onclick="${link}"`:''}><div class="n">${esc(x.name)}</div><div class="p">${f(x.price)}</div><div class="${s}">${arrow(x.change)} ${f(Math.abs(x.change||0))} (${f(Math.abs(x.pct||0))}%)</div>${spark(x.spark,s==='up')}</div>`}
+function stkTable(a,cols){return `<div class="scroll"><table><thead><tr><th>Stock</th><th>Price</th><th>Change</th>${(cols||[]).map(c=>`<th>${c[0]}</th>`).join('')}</tr></thead><tbody>`+a.map(x=>`<tr class="lk" onclick="location.hash='#/stock/${esc(x.symbol.replace('.NS',''))}'"><td class="sym">${esc(x.symbol.replace('.NS',''))}${x.name&&x.name!==x.symbol?`<span class="sub">${esc(x.name)}</span>`:''}</td><td>${f(x.price)}</td><td>${pill(x.pct)}</td>${(cols||[]).map(c=>`<td>${c[1](x)}</td>`).join('')}</tr>`).join('')+'</tbody></table></div>'}
+/* momentum cards */
+let PICKS=null;async function getPicks(force){if(!PICKS||force){try{PICKS=await j('/api/picks')}catch(e){}}return PICKS}
+const hold=k=>{try{return JSON.parse(localStorage.getItem('nx_h_'+k))}catch(e){return null}};
+const setHold=(k,v)=>{try{localStorage.setItem('nx_h_'+k,JSON.stringify(v))}catch(e){}};
+function momHTML(key,title,lst,compact){if(!lst||!lst.length)return `<div class="card mom"><div class="tag"><span>${esc(title)}</span></div><div class="empty" style="color:#99f6e4">No clear momentum pick right now.</div></div>`;
+let h=hold(key);let x=h&&lst.find(y=>y.symbol===h.symbol);if(!x){x=lst[0];setHold(key,{symbol:x.symbol,at:Date.now()});h=hold(key)}
+const s=sgn(x.pct);const t=new Date(h.at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+return `<div class="card mom" id="mom-${esc(key)}"><div class="tag"><span>${esc(title)}</span><span>score ${x.score}/100</span></div>
+<div class="big" onclick="location.hash='#/stock/${esc(x.symbol.replace('.NS',''))}'"><div class="nm">${esc(x.symbol.replace('.NS',''))}<small>${esc(x.name||'')}</small></div><div class="pr">${f(x.price)}<span class="${s}">${x.pct>=0?'▲ +':'▼ '}${f(x.pct)}%</span></div></div>
+<div class="meter"><i style="width:${x.score}%"></i></div>${compact?'':`<ul>${(x.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join('')||'<li>Ranks highest on a mix of volume, gap and closeness to the day high</li>'}</ul>`}
+<button onclick="refMom('${esc(key)}')">Refresh pick</button> <span class="sm" style="color:#99f6e4;margin-left:6px">Held since ${t}${compact?'':'. Stays until you tap refresh.'}</span>
+${compact?'':`<div class="fine">A momentum pick is the stock that scores highest on simple rules (volume, opening gap, closeness to the day high). It is a watchlist idea to study, not a buy or sell signal or a prediction. Delayed data. Intraday trading carries high risk.</div>`}</div>`}
+window.refMom=async k=>{setHold(k,null);localStorage.removeItem('nx_h_'+k);await getPicks(true);route()};
+/* ===== pages ===== */
+const R={};
+R.home=async el=>{el.innerHTML=`<h2 style="margin-top:16px">Top momentum stock <small>Nifty 50 scan</small></h2><div id="hm">${skel(1)}</div><h2>Indian indices <small id="u1"></small></h2><div class="grid g4" id="idx">${skel(4)}</div>
+${PRO}<h2>Global momentum picks <small>one per market, held until you refresh</small></h2><div class="grid g3" id="gm">${skel(3)}</div>
+${AD('home-1')}<h2>Market breadth <small>NSE all indices</small></h2><div class="card"><div class="bar" id="bar"></div><div id="breadth" class="sm"></div></div>
+<div class="grid g2"><div><h2>Top gainers <small>Nifty 50</small></h2><div class="card" id="gain">${skel(3)}</div></div><div><h2>Top losers <small>Nifty 50</small></h2><div class="card" id="lose">${skel(3)}</div></div></div>
+<h2>Sector heatmap</h2><div class="heat" id="heat"></div>${AFF}
+<div class="grid g2"><div><h2>FII / DII activity <small>latest session</small></h2><div class="card" id="fd">${skel(1)}</div></div><div><h2>Latest market news</h2><div class="card news" id="nw">${skel(3)}</div></div></div>`;
+j('/api/indices').then(d=>{$('idx').innerHTML=d.india.map(x=>idxCard(x,"go('markets')")).join('')||un;$('u1').textContent=d.asof?'Updated '+ist(d.asof):''}).catch(()=>$('idx').innerHTML=un);
+getPicks().then(p=>{if(!p){$('hm').innerHTML=un;$('gm').innerHTML=un;return}$('hm').innerHTML=momHTML('India','Momentum watchlist pick - India',p.markets.India);$('gm').innerHTML=Object.keys(p.markets).filter(k=>k!=='India').map(k=>momHTML(k,k,p.markets[k],true)).join('')||un});
+j('/api/movers2?g=NIFTY').then(d=>{$('gain').innerHTML=stkTable(d.gainers.slice(0,6));$('lose').innerHTML=stkTable(d.losers.slice(0,6))}).catch(()=>{$('gain').innerHTML=un;$('lose').innerHTML=un});
+j('/api/nse/indices').then(d=>{const a=+d.advances||0,b=+d.declines||0,t=a+b||1;$('bar').innerHTML=`<i style="width:${a/t*100}%;background:var(--up)"></i><i style="width:${b/t*100}%;background:var(--dn)"></i>`;$('breadth').innerHTML=`<b class="up">${a} indices up</b> &middot; <b class="dn">${b} down</b>`;
+const SEC=['NIFTY BANK','NIFTY IT','NIFTY AUTO','NIFTY FMCG','NIFTY PHARMA','NIFTY METAL','NIFTY REALTY','NIFTY PSU BANK','NIFTY MEDIA','NIFTY ENERGY','NIFTY OIL & GAS','NIFTY FINANCIAL SERVICES','NIFTY CONSUMER DURABLES','NIFTY HEALTHCARE INDEX'];
+$('heat').innerHTML=d.data.filter(x=>SEC.includes(x.index)).map(heatTile).join('')}).catch(()=>{});
+j('/api/fiidii').then(d=>{$('fd').innerHTML=fiiMini(d.latest)}).catch(()=>$('fd').innerHTML=un);
+j('/api/news').then(d=>$('nw').innerHTML=d.slice(0,6).map(newsRow).join('')).catch(()=>$('nw').innerHTML=un)};
+const heatTile=x=>{const p=+x.percentChange||0,a=Math.min(Math.abs(p)/2.5,1);const bg=p>=0?`rgba(16,185,129,${.35+a*.55})`:`rgba(244,63,94,${.35+a*.55})`;return `<div class="hc" style="background:${bg}"><b>${esc(x.index.replace('NIFTY ',''))}</b><span>${p>=0?'+':''}${f(p)}%</span></div>`};
+const newsRow=n=>`<a href="${esc(n.link)}" target="_blank" rel="noopener nofollow"><b>${esc(n.title)}</b><br><span>${esc(n.source)} &middot; ${n.ts?ist(n.ts):''}</span></a>`;
+function fiiMini(l){return l.map(x=>{const n=num(x.netValue);return `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span><b>${esc(x.category)}</b> <span class="sm">${esc(x.date)}</span></span><span class="${sgn(n)}"><b>${n>=0?'+':''}${f(n)} Cr</b> <span class="sm">net</span></span></div>`}).join('')+'<p class="sm" style="margin:8px 0 0">FII = foreign investors, DII = Indian institutions. Net buying means they bought more than they sold.</p>'}
+R.markets=async el=>{el.innerHTML=`<h1>Markets</h1><p class="how">An index is a scoreboard for a group of companies. Tap a card to see the chart.</p><div class="tabs" id="mt"></div><div id="mk">${skel(3)}</div>`;
+try{const d=await j('/api/nse/indices');const groups={'Broad':['NIFTY 50','NIFTY NEXT 50','NIFTY 100','NIFTY 200','NIFTY 500','NIFTY MIDCAP 50','NIFTY MIDCAP 100','NIFTY MIDCAP 150','NIFTY SMALLCAP 50','NIFTY SMALLCAP 100','NIFTY SMALLCAP 250','NIFTY MIDSMALLCAP 400','NIFTY LARGEMIDCAP 250','NIFTY TOTAL MARKET','INDIA VIX'],
+'Sectors':d.data.filter(x=>/BANK|IT$|AUTO|FMCG|PHARMA|METAL|REALTY|MEDIA|ENERGY|OIL|FINANCIAL|CONSUMER|HEALTH|CHEMICAL|CEMENT|INFRA|PSE|COMMODIT|MNC|SERV|TELECOM|DEFENCE|CAPITAL|MOBILITY|RAIL|INTERNET|TOURISM/.test(x.index)&&!/LEVERAGE|INVERSE/.test(x.index)).map(x=>x.index),
+'Strategy':d.data.filter(x=>/QUALITY|VALUE|ALPHA|MOMENTUM|LOW VOL|EQUAL|DIVIDEND|GROWTH|LOW-VOL/.test(x.index)).map(x=>x.index)};
+let cur='Broad';const draw=()=>{$('mt').innerHTML=Object.keys(groups).map(k=>`<button class="${k===cur?'on':''}" data-k="${k}">${k}</button>`).join('');
+const rows=groups[cur].map(n=>d.data.find(x=>x.index===n)).filter(Boolean);
+$('mk').innerHTML=(cur==='Sectors'?`<div class="heat" style="margin-bottom:14px">${rows.map(heatTile).join('')}</div>`:'')+`<div class="card scroll"><table><thead><tr><th>Index</th><th>Last</th><th>Change</th><th>PE</th><th>PB</th><th>Div yld</th><th>30d</th><th>1y</th><th>52w range</th></tr></thead><tbody>`+rows.map(x=>{const lo=+x.yearLow,hi=+x.yearHigh,p=hi>lo?(+x.last-lo)/(hi-lo)*100:0;return `<tr class="lk" onclick="location.hash='#/index/${encodeURIComponent(x.index)}'"><td class="sym">${esc(x.index)}</td><td>${f(x.last)}</td><td>${pill(x.percentChange)}</td><td>${f(x.pe)}</td><td>${f(x.pb)}</td><td>${f(x.dy)}</td><td>${pill(x.perChange30d)}</td><td>${pill(x.perChange365d)}</td><td style="min-width:120px"><div class="range"><i style="left:${Math.max(0,Math.min(98,p))}%"></i></div><span class="sm">${f(lo,0)} - ${f(hi,0)}</span></td></tr>`}).join('')+'</tbody></table></div>';
+$('mt').onclick=e=>{const b=e.target.closest('[data-k]');if(b){cur=b.dataset.k;draw()}}};draw();
+$('mk').insertAdjacentHTML('afterend',`<p class="sm" style="margin-top:8px">PE = price to earnings (price paid per rupee of profit), PB = price to book value. Source: NSE India public data, delayed.</p>`+AD('markets-1'))}catch(e){$('mk').innerHTML=un}};
+/* chart */
+function chartHTML(id){return `<div class="tabs" id="${id}-t"></div><svg class="chart" id="${id}"></svg><div class="tt" id="${id}-tt"></div>`}
+async function drawChart(id,sym,ranges,def){let cur=def||ranges[0];const tabs=$(id+'-t');
+const load=async r=>{cur=r;tabs.innerHTML=ranges.map(x=>`<button class="${x===cur?'on':''}" data-r="${x}">${x.toUpperCase()}</button>`).join('');
+try{const d=await j(`/api/chart?s=${encodeURIComponent(sym)}&r=${r}`);plot(id,d.points,d.prev,r)}catch(e){$(id).innerHTML='';$(id+'-tt').textContent='Chart unavailable right now.'}};
+tabs.onclick=e=>{const b=e.target.closest('[data-r]');if(b)load(b.dataset.r)};await load(cur)}
+function plot(id,pts,prev,r){const svg=$(id);if(!pts||pts.length<2){svg.innerHTML='';return}const W=900,H=280,P={l:8,r:58,t:10,b:22};const ys=pts.map(p=>p[1]);let mn=Math.min(...ys),mx=Math.max(...ys);const pad=(mx-mn)*.08||1;mn-=pad;mx+=pad;
+const X=i=>P.l+i/(pts.length-1)*(W-P.l-P.r),Y=v=>P.t+(1-(v-mn)/(mx-mn))*(H-P.t-P.b);
+const up=ys[ys.length-1]>=(r==='1d'&&prev?prev:ys[0]);const c=up?'#22c55e':'#f43f5e';const line=pts.map((p,i)=>X(i).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ');
+let g='';for(let k=0;k<4;k++){const v=mn+(mx-mn)*k/3;g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${W-P.r+6}" y="${Y(v)+4}" fill="var(--mut)" font-size="11">${f(v,v>1000?0:2)}</text>`}
+const fmt=t=>new Date(t*1000).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',year:r==='5y'||r==='max'||r==='1y'?'2-digit':undefined,hour:r==='1d'||r==='5d'?'2-digit':undefined,minute:r==='1d'||r==='5d'?'2-digit':undefined});
+svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.setAttribute('preserveAspectRatio','none');
+svg.innerHTML=`${g}${r==='1d'&&prev?`<line x1="${P.l}" x2="${W-P.r}" y1="${Y(prev)}" y2="${Y(prev)}" stroke="var(--mut)" stroke-dasharray="4 4" opacity=".6"/>`:''}<polygon points="${P.l},${H-P.b} ${line} ${X(pts.length-1)},${H-P.b}" fill="${c}" opacity=".13"/><polyline points="${line}" fill="none" stroke="${c}" stroke-width="2"/><line id="${id}-cx" y1="${P.t}" y2="${H-P.b}" stroke="var(--mut)" opacity="0"/><circle id="${id}-cd" r="4.5" fill="${c}" opacity="0"/>`;
+const tt=$(id+'-tt');tt.innerHTML=`${fmt(pts[0][0])} to ${fmt(pts[pts.length-1][0])}`;
+const mv=e=>{const b=svg.getBoundingClientRect();const cx=(e.touches?e.touches[0].clientX:e.clientX)-b.left;const i=Math.max(0,Math.min(pts.length-1,Math.round((cx/b.width*W-P.l)/(W-P.l-P.r)*(pts.length-1))));const p=pts[i];
+$(id+'-cx').setAttribute('x1',X(i));$(id+'-cx').setAttribute('x2',X(i));$(id+'-cx').setAttribute('opacity','.6');$(id+'-cd').setAttribute('cx',X(i));$(id+'-cd').setAttribute('cy',Y(p[1]));$(id+'-cd').setAttribute('opacity','1');
+tt.innerHTML=`<b style="color:var(--ink)">${f(p[1])}</b> &middot; ${fmt(p[0])}${p[2]?` &middot; vol ${vol(p[2])}`:''}`};
+svg.onmousemove=mv;svg.ontouchmove=mv;svg.onmouseleave=()=>{$(id+'-cx').setAttribute('opacity','0');$(id+'-cd').setAttribute('opacity','0');tt.innerHTML=`${fmt(pts[0][0])} to ${fmt(pts[pts.length-1][0])}`}}
+/* stock page */
+const WL=()=>{try{return JSON.parse(localStorage.getItem('nexora_wl'))||[]}catch(e){return[]}};const saveWL=l=>{try{localStorage.setItem('nexora_wl',JSON.stringify(l))}catch(e){}};
+R.stock=async(el,sym)=>{sym=decodeURIComponent(sym).toUpperCase().replace('.NS','');el.innerHTML=`<div class="hero"><div><div class="sm"><a href="#/markets" style="color:var(--brand)">Markets</a> / Stocks</div><h1 id="sn">${esc(sym)}</h1><div class="sm" id="ss"></div></div><div style="text-align:right"><div class="px" id="sp">...</div><div id="sc"></div><button class="ib" id="sw" style="margin-top:6px"></button></div></div>
+<div class="card" style="margin-top:12px">${chartHTML('sch')}</div><div id="sk" class="grid" style="margin-top:12px">${skel(2)}</div>`;
+const upW=()=>{const l=WL().includes(sym+'.NS');$('sw').textContent=l?'★ In watchlist':'☆ Add to watchlist'};upW();$('sw').onclick=()=>{let l=WL();const k=sym+'.NS';l=l.includes(k)?l.filter(x=>x!==k):[...l,k];saveWL(l);upW()};
+drawChart('sch',sym,['1d','5d','1m','6m','1y','5y','max'],'1d');
+let S;try{S=await j('/api/stock?s='+encodeURIComponent(sym))}catch(e){$('sk').innerHTML=un;return}
+if(location.hash.indexOf(sym)<0)return;
+$('sn').textContent=S.name||sym;document.title=(S.name||sym)+' share price, financials and ratios | Nexora Markets';$('ss').textContent=[S.symbol,S.exchange,S.sector,S.industry].filter(Boolean).join(' · ');
+$('sp').textContent='₹'+f(S.price);$('sc').innerHTML=`<span class="${sgn(S.change)}" style="font-weight:700">${arrow(S.change)} ${f(Math.abs(S.change||0))} (${f(Math.abs(S.pct||0))}%)</span>`;
+const pos=(v,lo,hi)=>hi>lo?Math.max(0,Math.min(98,(v-lo)/(hi-lo)*100)):0;const pc=v=>v==null?'-':f(v*100)+'%';
+const K=(l,v,tip)=>`<div title="${esc(tip||'')}"><small>${l}</small><b>${v}</b></div>`;
+$('sk').innerHTML=`<div class="grid g2"><div class="card"><h2 style="margin-top:0">Price snapshot</h2><div class="kv">${K('Open','₹'+f(S.open))}${K('Previous close','₹'+f(S.prev))}${K('Volume',vol(S.volume))}${K('Avg volume',vol(S.avgVolume))}</div>
+<p class="sm" style="margin:12px 0 0">Today's range: ₹${f(S.dayLow)} - ₹${f(S.dayHigh)}</p><div class="range"><i style="left:${pos(S.price,S.dayLow,S.dayHigh)}%"></i></div>
+<p class="sm" style="margin:12px 0 0">52-week range: ₹${f(S.lo52)} - ₹${f(S.hi52)}</p><div class="range"><i style="left:${pos(S.price,S.lo52,S.hi52)}%"></i></div></div>
+<div class="card"><h2 style="margin-top:0">Key ratios <small>hover for meaning</small></h2><div class="kv">${K('Market cap',cr(S.marketCap),'Total value of all shares')}${K('P/E',f(S.pe),'Price paid for every rupee of yearly profit. Lower can mean cheaper, but compare with similar companies.')}${K('P/B',f(S.pb),'Price compared with the company book value')}${K('EPS','₹'+f(S.eps),'Profit per share')}${K('Dividend yield',S.divYield?f(S.divYield*100)+'%':'-','Yearly dividend as a percent of price')}${K('Beta',f(S.beta),'How much the stock moves compared with the market. Above 1 means more volatile.')}${K('ROE',pc(S.roe),'Profit made on shareholders money')}${K('Debt / equity',f(S.de),'Borrowings compared with shareholders money, in percent')}${K('Current ratio',f(S.currentRatio),'Short-term assets divided by short-term bills')}${K('Net margin',pc(S.netMargin),'Profit as a share of sales')}${K('Operating margin',pc(S.opMargin),'Operating profit as a share of sales')}${K('Revenue growth',pc(S.revGrowth),'Latest reported growth in sales')}</div></div></div>
+<div class="card" id="fin"><h2 style="margin-top:0">Financials</h2>${skel(1)}</div>
+${AD('stock-1')}
+<div class="grid g2"><div class="card"><h2 style="margin-top:0">About ${esc(S.name||sym)}</h2><p style="color:var(--mut);font-size:14px">${esc((S.about||'No description available.').slice(0,700))}${(S.about||'').length>700?'...':''}</p><div class="kv">${K('Sector',esc(S.sector||'-'))}${K('Industry',esc(S.industry||'-'))}${K('Employees',S.employees?f(S.employees,0):'-')}${K('City',esc(S.city||'-'))}</div>${S.website?`<p class="sm"><a href="${esc(S.website)}" target="_blank" rel="noopener nofollow" style="color:var(--brand)">${esc(S.website)}</a></p>`:''}</div>
+<div class="card"><h2 style="margin-top:0">Analyst view <small>third-party opinions, not ours</small></h2>${S.targetMean?`<div class="kv">${K('Average target','₹'+f(S.targetMean))}${K('High / low target','₹'+f(S.targetHigh,0)+' / ₹'+f(S.targetLow,0))}${K('Analysts',S.analysts||'-')}${K('Consensus',esc((S.reco||'-').replace('_',' ')))}</div>`:'<div class="empty">No analyst coverage data.</div>'}
+${S.trend&&S.trend.buy!=null?`<p class="sm" style="margin:10px 0 4px">Ratings split: ${S.trend.strongBuy||0} strong buy, ${S.trend.buy||0} buy, ${S.trend.hold||0} hold, ${S.trend.sell||0} sell, ${S.trend.strongSell||0} strong sell</p>`:''}
+<h2 style="font-size:15px;margin:14px 0 6px">Ownership</h2><div class="kv">${K('Insiders',pc(S.insiders),'Held by company insiders and promoters (as reported by the data source)')}${K('Institutions',pc(S.institutions),'Held by funds and institutions')}</div></div></div>
+<div class="grid g2"><div class="card"><h2 style="margin-top:0">Peers</h2><div id="pe">${skel(1)}</div></div><div class="card news"><h2 style="margin-top:0">News on ${esc(S.name||sym)}</h2><div id="sn2">${skel(2)}</div></div></div>${AFF}
+<p class="sm">Company data: Yahoo Finance and NSE India public sources, delayed and unaudited. Verify with the company's filings before acting.</p>`;
+j('/api/fin?s='+encodeURIComponent(sym)).then(d=>{$('fin').innerHTML='<h2 style="margin-top:0">Financials <small>amounts in ₹ Crore unless noted, source Yahoo Finance</small></h2><div class="tabs" id="ft"></div><div id="fb"></div>';let mode='annual';const draw=()=>{$('ft').innerHTML=['annual','quarterly'].map(m=>`<button class="${m===mode?'on':''}" data-m="${m}">${m==='annual'?'Yearly':'Quarterly'}</button>`).join('');
+const src=d[mode],lbl=mode==='annual'?'annual':'quarterly';const rowsDef=mode==='annual'?[['Revenue','TotalRevenue'],['EBITDA','EBITDA'],['Net profit','NetIncome'],['EPS (₹)','BasicEPS',1],['Total assets','TotalAssets'],['Total debt','TotalDebt'],['Shareholders equity','StockholdersEquity'],['Operating cash flow','OperatingCashFlow'],['Free cash flow','FreeCashFlow']]:[['Revenue','TotalRevenue'],['EBITDA','EBITDA'],['Net profit','NetIncome'],['EPS (₹)','BasicEPS',1]];
+const dates=[...new Set(rowsDef.flatMap(r=>(src[lbl+r[1]]||[]).map(x=>x[0])))].sort().slice(-6);
+if(!dates.length){$('fb').innerHTML='<div class="empty">Financial statements not available for this company.</div>';return}
+const rev=(src[lbl+'TotalRevenue']||[]).slice(-6),ni=(src[lbl+'NetIncome']||[]).slice(-6);const mx=Math.max(...rev.map(x=>x[1]),1);
+$('fb').innerHTML=`<div class="scroll"><table><thead><tr><th></th>${dates.map(x=>`<th>${x.slice(0,7)}</th>`).join('')}</tr></thead><tbody>`+rowsDef.map(r=>{const m=Object.fromEntries(src[lbl+r[1]]||[]);return `<tr><td class="sym">${r[0]}</td>${dates.map(x=>`<td>${m[x]==null?'-':(r[2]?f(m[x]):f(m[x]/1e7,0))}</td>`).join('')}</tr>`}).join('')+`</tbody></table></div><div style="display:flex;gap:6px;align-items:flex-end;height:90px;margin-top:14px">${rev.map((x,i)=>`<div style="flex:1;text-align:center" title="${x[0]}"><div style="height:${x[1]/mx*70}px;background:linear-gradient(var(--brand2),var(--brand));border-radius:6px 6px 0 0;min-height:3px"></div><div class="sm">${x[0].slice(2,7)}</div></div>`).join('')}</div><p class="sm" style="margin:4px 0 0">Bars show revenue. Net profit last: ${ni.length?'₹'+f(ni[ni.length-1][1]/1e7,0)+' Cr':'-'}</p>`};
+$('ft').onclick=e=>{const b=e.target.closest('[data-m]');if(b){mode=b.dataset.m;draw()}};draw()}).catch(()=>$('fin').innerHTML='<h2 style="margin-top:0">Financials</h2>'+un);
+j('/api/peers?s='+encodeURIComponent(sym)).then(d=>$('pe').innerHTML=d.peers.length?stkTable(d.peers):'<div class="empty">No peers found.</div>').catch(()=>$('pe').innerHTML=un);
+j('/api/stocknews?s='+encodeURIComponent(sym)+'&n='+encodeURIComponent(S.name||sym)).then(d=>$('sn2').innerHTML=d.data.slice(0,6).map(newsRow).join('')||'<div class="empty">No recent news.</div>').catch(()=>$('sn2').innerHTML=un)};
+R.index=async(el,name)=>{name=decodeURIComponent(name);const ymap={'NIFTY 50':'^NSEI','NIFTY BANK':'^NSEBANK','NIFTY IT':'^CNXIT','NIFTY AUTO':'^CNXAUTO','NIFTY FMCG':'^CNXFMCG','NIFTY PHARMA':'^CNXPHARMA','INDIA VIX':'^INDIAVIX','NIFTY METAL':'^CNXMETAL','NIFTY REALTY':'^CNXREALTY','NIFTY MEDIA':'^CNXMEDIA','NIFTY ENERGY':'^CNXENERGY','NIFTY PSU BANK':'^CNXPSUBANK','NIFTY 100':'^CNX100','NIFTY 500':'^CRSLDX','NIFTY MIDCAP 100':'^CNXMIDCAP','NIFTY SMALLCAP 100':'^CNXSC'};
+el.innerHTML=`<div class="sm"><a href="#/markets" style="color:var(--brand)">Markets</a> / Index</div><h1>${esc(name)}</h1><div id="ix">${skel(1)}</div>`;
+try{const d=await j('/api/nse/indices');const x=d.data.find(y=>y.index===name);if(!x){$('ix').innerHTML=un;return}const s=sgn(x.variation);
+$('ix').innerHTML=`<div class="hero"><div class="px">${f(x.last)}</div><div class="${s}" style="font-weight:700;font-size:18px">${arrow(x.variation)} ${f(Math.abs(x.variation))} (${f(Math.abs(x.percentChange))}%)</div></div>
+${ymap[name]?`<div class="card" style="margin-top:12px">${chartHTML('ich')}</div>`:''}<div class="card" style="margin-top:12px"><div class="kv">${[['Open',x.open],['High',x.high],['Low',x.low],['Previous close',x.previousClose],['52w high',x.yearHigh],['52w low',x.yearLow]].map(a=>`<div><small>${a[0]}</small><b>${f(a[1])}</b></div>`).join('')}<div><small>P/E</small><b>${f(x.pe)}</b></div><div><small>P/B</small><b>${f(x.pb)}</b></div><div><small>Dividend yield</small><b>${f(x.dy)}%</b></div><div><small>Advances / declines</small><b>${x.advances||'-'} / ${x.declines||'-'}</b></div></div></div>${AD('index-1')}`;
+if(ymap[name])drawChart('ich',ymap[name],['1d','5d','1m','6m','1y','5y'],'1d')}catch(e){$('ix').innerHTML=un}};
+/* screens */
+R.screens=async el=>{el.innerHTML=`<h1>Stock screens</h1><div class="note warn"><b>Read this first.</b> These screens only sort stocks by simple rules. They are not buy or sell signals and do not predict anything. Intraday trading is risky and most beginners lose money. Learn first and never trade money you cannot afford to lose.</div>
+<h2 style="margin-top:8px">Momentum picks <small>Nifty 50 scan</small></h2><div id="sp1">${skel(1)}</div><div class="tabs" id="gt"></div><div id="sg">${skel(2)}</div>${AD('screens-1')}<h2>Rules based screens <small id="u2"></small></h2><div class="grid g3" id="scr">${skel(3)}</div><div class="grid g2"><div><h2>52-week highs <small>NSE, all stocks</small></h2><div class="card" id="h52">${skel(2)}</div></div><div><h2>52-week lows</h2><div class="card" id="l52">${skel(2)}</div></div></div>
+<h2>Most active <small>by traded value, all NSE stocks</small></h2><div class="card" id="act">${skel(2)}</div>`;
+getPicks().then(p=>{$('sp1').innerHTML=p?momHTML('India','Momentum watchlist pick - India',p.markets.India):un});
+const G=[['NIFTY','Nifty 50'],['NIFTYNEXT50','Nifty Next 50'],['BANKNIFTY','Bank Nifty'],['FOSec','F&O stocks'],['allSec','All stocks']];let cg='NIFTY';
+const dg=async()=>{$('gt').innerHTML=G.map(g=>`<button class="${g[0]===cg?'on':''}" data-g="${g[0]}">${g[1]}</button>`).join('');try{const d=await j('/api/movers2?g='+cg);const cols=[['Volume',x=>vol(x.volume)],['Day high',x=>f(x.high)]];$('sg').innerHTML=`<div class="grid g2"><div class="card"><h2 style="margin-top:0">Top gainers</h2>${stkTable(d.gainers.slice(0,10),cols)}</div><div class="card"><h2 style="margin-top:0">Top losers</h2>${stkTable(d.losers.slice(0,10),cols)}</div></div>`}catch(e){$('sg').innerHTML=un}};
+$('gt').onclick=e=>{const b=e.target.closest('[data-g]');if(b){cg=b.dataset.g;dg()}};dg();
+const SC=[['near_high','Trading near today\'s high','Up on the day and within 0.4% of the high. Buyers are in control so far.',x=>pill(x.pct)],['near_low','Trading near today\'s low','Down on the day and within 0.4% of the low. Sellers are in control so far.',x=>pill(x.pct)],['volume','Volume buzz','At least 1.3x the usual volume for this time of day. Something may be drawing attention.',x=>`<span class="pill n">${f(x.vratio,1)}x vol</span>`],['gap_up','Gap up at open','Opened at least 0.8% above yesterday\'s close. Often follows news.',x=>`<span class="pill up">gap +${f(x.gap)}%</span>`],['gap_down','Gap down at open','Opened at least 0.8% below yesterday\'s close. Often follows news.',x=>`<span class="pill dn">gap ${f(x.gap)}%</span>`],['volatile','Widest range today','Biggest gap between today\'s low and high. More movement means more risk both ways.',x=>`<span class="pill n">range ${f(x.range)}%</span>`]];
+j('/api/screens').then(d=>{$('u2').textContent=d.asof?'Updated '+ist(d.asof)+(d.day?' - session '+d.day:''):'';$('scr').innerHTML=SC.map(([k,t,w,fn])=>{const a=d.s[k]||[];return `<div class="card"><h2 style="margin:0">${t}</h2><p class="how" style="margin:2px 0 8px">${w}</p>`+(a.length?stkTable(a,[['',fn]]):'<div class="empty">No stock matches right now.</div>')+'</div>'}).join('')}).catch(()=>$('scr').innerHTML=un);
+j('/api/52w').then(d=>{const c=[['52w level',x=>f(x.level)]];$('h52').innerHTML=stkTable(d.high.slice(0,12).map(x=>({symbol:x.symbol,name:x.name,price:x.ltp,pct:x.pct,level:x.level})),c);$('l52').innerHTML=stkTable(d.low.slice(0,12).map(x=>({symbol:x.symbol,name:x.name,price:x.ltp,pct:x.pct,level:x.level})),c)}).catch(()=>{$('h52').innerHTML=un;$('l52').innerHTML=un});
+j('/api/active?by=value').then(d=>$('act').innerHTML=stkTable(d.data.slice(0,15),[['Traded value',x=>cr(x.value)],['Volume',x=>vol(x.volume)]])).catch(()=>$('act').innerHTML=un)};
+/* F&O */
+R.fno=async el=>{el.innerHTML=`<h1>Futures & options</h1><p class="how">Derivatives are contracts whose value follows a stock or index. Options data shows where traders have placed their bets. This page is for learning, it is not a signal. Derivatives can lose money very fast.</p><div class="tabs" id="ot"></div><div id="oc">${skel(2)}</div>${AD('fno-1')}<h2>Open interest buildup <small>stocks and indices with the biggest jump in open interest</small></h2><div class="card" id="oi">${skel(2)}</div>`;
+let sym='NIFTY',exp='';const draw=async()=>{$('ot').innerHTML=['NIFTY','BANKNIFTY','FINNIFTY','MIDCPNIFTY'].map(s=>`<button class="${s===sym?'on':''}" data-s="${s}">${s}</button>`).join('');
+try{const d=await j(`/api/options?symbol=${sym}${exp?'&expiry='+encodeURIComponent(exp):''}`);exp=d.expiry;const mx=Math.max(...d.rows.flatMap(r=>[(r.CE||{}).oi||0,(r.PE||{}).oi||0]),1);
+const pcrTxt=d.pcr==null?'-':d.pcr>1.2?'More puts than calls. Traders lean cautious or are hedging.':d.pcr<0.8?'More calls than puts. Traders lean optimistic or are writing puts less.':'Balanced.';
+$('oc').innerHTML=`<div class="card"><div class="tabs">${d.expiries.map(e=>`<button class="${e===exp?'on':''}" data-e="${e}">${e}</button>`).join('')}</div><div class="kv" style="margin-bottom:12px"><div title="Current index level"><small>Spot</small><b>${f(d.spot)}</b></div><div title="Put OI divided by Call OI"><small>Put/call ratio (PCR)</small><b>${f(d.pcr)}</b></div><div title="The strike where option writers would lose least"><small>Max pain</small><b>${f(d.maxPain,0)}</b></div><div title="Strike with the most call open interest"><small>Highest call OI (resistance zone)</small><b>${f(d.resistance,0)}</b></div><div title="Strike with the most put open interest"><small>Highest put OI (support zone)</small><b>${f(d.support,0)}</b></div></div><p class="sm" style="margin:0 0 10px">PCR reading: ${pcrTxt} Open interest (OI) = number of contracts still open.</p>
+<div class="scroll"><table><thead><tr><th>Call OI</th><th>Call LTP</th><th>Strike</th><th>Put LTP</th><th>Put OI</th></tr></thead><tbody>`+d.rows.map(r=>{const c=r.CE||{},p=r.PE||{};return `<tr class="${r.strike===d.atm?'atm':''}"><td style="text-align:right"><span class="oi ce" style="width:${(c.oi||0)/mx*90}px"></span> ${vol(c.oi)}</td><td>${f(c.ltp)}</td><td style="text-align:center"><b>${f(r.strike,0)}</b></td><td>${f(p.ltp)}</td><td style="text-align:left"><span class="oi pe" style="width:${(p.oi||0)/mx*90}px"></span> ${vol(p.oi)}</td></tr>`}).join('')+`</tbody></table></div><p class="sm">Source: NSE India public data, delayed. Highlighted row is the strike nearest to the index level.</p></div>`}catch(e){$('oc').innerHTML=un}};
+$('app').onclick=e=>{const b=e.target.closest('[data-s]');if(b&&b.parentElement.id==='ot'){sym=b.dataset.s;exp='';draw()}const x=e.target.closest('[data-e]');if(x){exp=x.dataset.e;draw()}};draw();
+j('/api/fno').then(d=>$('oi').innerHTML=`<div class="scroll"><table><thead><tr><th>Underlying</th><th>Price</th><th>Open interest</th><th>Change in OI</th><th>Volume (contracts)</th></tr></thead><tbody>`+d.oi.map(x=>`<tr><td class="sym">${esc(x.symbol)}</td><td>${f(x.price)}</td><td>${vol(x.oi)}</td><td>${pill(x.pct)}</td><td>${vol(x.volume)}</td></tr>`).join('')+'</tbody></table></div>').catch(()=>$('oi').innerHTML=un)};
+/* IPO */
+R.ipo=async el=>{el.innerHTML=`<h1>IPOs</h1><p class="how">An IPO is when a company first sells shares to the public. Apply only after reading the offer document (RHP). Listing gains are never guaranteed.</p><div id="ip">${skel(2)}</div>${AD('ipo-1')}`;
+try{const d=await j('/api/ipo');const cur=d.current||[];const up=(d.upcoming&&(d.upcoming.upcoming||d.upcoming.data))||[];const act=(d.upcoming&&d.upcoming.active)||[];
+const sub=x=>x.noOfSharesBid&&x.noOfSharesOffered?f(x.noOfSharesBid/x.noOfSharesOffered,2)+'x':'-';
+$('ip').innerHTML=`<h2 style="margin-top:0">Open now <small>${cur.length} issue${cur.length===1?'':'s'}</small></h2><div class="card scroll">`+(cur.length?`<table><thead><tr><th>Company</th><th>Price band</th><th>Opens</th><th>Closes</th><th>Subscribed</th><th>Type</th></tr></thead><tbody>`+cur.map(x=>`<tr><td class="sym">${esc(x.companyName)}<span class="sub">${esc(x.symbol)}</span></td><td>${esc(x.issuePrice)}</td><td>${esc(x.issueStartDate)}</td><td>${esc(x.issueEndDate)}</td><td>${sub(x)}</td><td>${esc(x.series==='EQ'?'Mainboard':'SME')}</td></tr>`).join('')+'</tbody></table>':'<div class="empty">No IPOs are open for bidding today.</div>')+`</div><h2>Upcoming <small>announced by NSE</small></h2><div class="card scroll">`+(up.length?`<table><thead><tr><th>Company</th><th>Opens</th><th>Closes</th><th>Price band</th></tr></thead><tbody>`+up.map(x=>{x=x.data||x;return `<tr><td class="sym">${esc(x.companyName||x.symbol)}</td><td>${esc(x.issueStartDate||'-')}</td><td>${esc(x.issueEndDate||'-')}</td><td>${esc(x.issuePrice||'-')}</td></tr>`}).join('')+'</tbody></table>':'<div class="empty">No upcoming issues announced yet.</div>')+'</div><p class="sm">Source: NSE India public data. Grey market premium and ratings are not shown here.</p>'}catch(e){$('ip').innerHTML=un}};
+/* FII DII */
+R.fiidii=async el=>{el.innerHTML=`<h1>FII / DII activity</h1><p class="how">FIIs (foreign institutional investors) and DIIs (domestic institutions like mutual funds and insurers) move large money. When FIIs sell and DIIs buy, the market often holds steady. Cash market figures in ₹ crore.</p><div id="fi">${skel(2)}</div>${AD('fii-1')}`;
+try{const d=await j('/api/fiidii');const dates=Object.keys(d.history);const mx=Math.max(...d.latest.flatMap(x=>[num(x.buyValue),num(x.sellValue)]),1);
+$('fi').innerHTML=`<div class="grid g2">`+d.latest.map(x=>{const n=num(x.netValue);return `<div class="card"><div class="sm">${esc(x.date)}</div><h2 style="margin:2px 0 8px">${esc(x.category)}</h2><div class="${sgn(n)}" style="font-size:28px;font-weight:800">${n>=0?'+':''}${f(n)} Cr</div><div class="sm">${n>=0?'Net buyers':'Net sellers'}</div><div style="margin-top:12px"><div class="sm">Bought ${f(x.buyValue)} Cr</div><div class="bar"><i style="width:${num(x.buyValue)/mx*100}%;background:var(--up)"></i></div><div class="sm">Sold ${f(x.sellValue)} Cr</div><div class="bar"><i style="width:${num(x.sellValue)/mx*100}%;background:var(--dn)"></i></div></div></div>`}).join('')+`</div><p class="sm">Source: NSE India provisional data. This page keeps a short history while the app stays open (${dates.length} day${dates.length===1?'':'s'}).</p>`}catch(e){$('fi').innerHTML=un}};
+/* calendar */
+R.calendar=async el=>{el.innerHTML=`<h1>Calendar</h1><div class="tabs" id="ct"><button class="on" data-c="r">Results</button><button data-c="a">Dividends & splits</button><button data-c="d">Block deals</button><button data-c="n">Announcements</button><button data-c="e">Economy</button></div><div id="cb">${skel(2)}</div>`;
+const T={r:async()=>{const d=await j('/api/results');return `<p class="how">Companies report profit and sales every quarter. Share prices often move on results day.</p><div class="card scroll"><table><thead><tr><th>Company</th><th>Date</th><th>For</th></tr></thead><tbody>`+d.data.map(x=>`<tr class="lk" onclick="location.hash='#/stock/${esc(x.symbol)}'"><td class="sym">${esc(x.symbol)}<span class="sub">${esc(x.name)}</span></td><td>${esc(x.date)}</td><td style="text-align:right;max-width:260px"><span class="sub" style="max-width:260px;margin-left:auto">${esc((x.desc||'').replace('To consider and approve the ',''))}</span></td></tr>`).join('')+'</tbody></table></div><p class="sm">Source: NSE India board meeting intimations.</p>'},
+a:async()=>{const d=await j('/api/events');return `<p class="how">Ex-date is the first day the share trades without the dividend or split benefit. Buy before the ex-date to receive it.</p><div class="card scroll"><table><thead><tr><th>Company</th><th>Action</th><th>Ex-date</th><th>Record date</th></tr></thead><tbody>`+d.actions.map(x=>`<tr class="lk" onclick="location.hash='#/stock/${esc(x.symbol)}'"><td class="sym">${esc(x.symbol)}<span class="sub">${esc(x.name)}</span></td><td style="text-align:right">${esc(x.subject)}</td><td>${esc(x.ex)}</td><td>${esc(x.record)}</td></tr>`).join('')+'</tbody></table></div>'},
+d:async()=>{const d=await j('/api/deals');return `<p class="how">Block deals are very large trades done in one go, often by institutions.</p><div class="card scroll"><table><thead><tr><th>Stock</th><th>Price</th><th>Quantity</th><th>Value</th></tr></thead><tbody>`+d.data.map(x=>`<tr class="lk" onclick="location.hash='#/stock/${esc(x.symbol)}'"><td class="sym">${esc(x.symbol)}</td><td>${f(x.price)}</td><td>${vol(x.qty)}</td><td>${cr(x.value)}</td></tr>`).join('')+`</tbody></table></div><p class="sm">As of ${esc(d.ts||'')}. Source: NSE India.</p>`},
+n:async()=>{const d=await j('/api/announce');return `<p class="how">Latest company announcements filed with the exchange. Links open the exchange filing.</p><div class="card news">`+d.data.map(x=>`<a href="${esc(x.link||'#')}" target="_blank" rel="noopener nofollow"><b>${esc(x.name||x.symbol)}: ${esc(x.desc)}</b><br><span>${esc(x.text.slice(0,160))} &middot; ${esc(x.time)}</span></a>`).join('')+'</div>'},
+e:async()=>`<p class="how">Key scheduled events that move markets. Dates are indicative, confirm with the official source before relying on them.</p><div class="card"><dl class="learn"><dt>RBI monetary policy (repo rate decision)</dt><dd>Held about every two months. Rate cuts help borrowers and rate-sensitive stocks like banks, real estate and autos.</dd><dt>India CPI inflation</dt><dd>Released around the 12th of each month by MoSPI. High inflation can delay rate cuts.</dd><dt>India GDP</dt><dd>Quarterly growth numbers, released about two months after each quarter ends.</dd><dt>US Federal Reserve meeting</dt><dd>Eight times a year. US rate moves affect foreign money flows into India.</dd><dt>US jobs report</dt><dd>First Friday of each month. A strong report can lift the dollar and weigh on emerging markets.</dd><dt>F&O monthly expiry</dt><dd>Last Tuesday of the month for Nifty derivatives. Volatility is often higher near expiry.</dd></dl></div><p class="sm">Exact dates are not pulled live yet. A live economic calendar is planned.</p>`};
+let ccur='r';const dc=async()=>{$('ct').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.c===ccur));$('cb').innerHTML=skel(2);try{$('cb').innerHTML=await T[ccur]()+AD('cal-1')}catch(e){$('cb').innerHTML=un}};
+$('ct').onclick=e=>{const b=e.target.closest('[data-c]');if(b){ccur=b.dataset.c;dc()}};dc()};
+/* world */
+R.world=async el=>{el.innerHTML=`<h1>World markets</h1><p class="how">Overseas markets often set the mood for India's next morning. If the US fell overnight, India often opens weak, and the reverse.</p><div class="grid g4" id="w">${skel(4)}</div>${AD('world-1')}<h2>Momentum picks by market <small>one per market, held until you refresh. Big-company scan, delayed.</small></h2><div class="grid g3" id="wp">${skel(3)}</div>${AFF}`;
+j('/api/indices').then(d=>$('w').innerHTML=d.world.map(x=>idxCard(x,`location.hash='#/chart/${encodeURIComponent(x.symbol)}/${encodeURIComponent(x.name)}'`)).join('')||un).catch(()=>$('w').innerHTML=un);
+getPicks().then(p=>$('wp').innerHTML=p?Object.keys(p.markets).filter(k=>k!=='India').map(k=>momHTML(k,k+' momentum pick',p.markets[k])).join(''):un)};
+R.chart=async(el,sym,name)=>{sym=decodeURIComponent(sym);name=decodeURIComponent(name||sym);el.innerHTML=`<div class="sm"><a href="#/world" style="color:var(--brand)">World</a> / Chart</div><h1>${esc(name)}</h1><div class="card">${chartHTML('wch')}</div>${AD('chart-1')}`;drawChart('wch',sym,['1d','5d','1m','6m','1y','5y'],'1d')};
+R.commodities=async el=>{el.innerHTML=`<h1>Commodities, currency & crypto</h1><p class="how">Gold and silver are metals people buy as a store of value. Crude oil affects petrol costs and inflation. A weaker rupee (higher USD/INR) makes imports costlier. Each card shows a momentum read from the same simple rules as the stock picks. Not advice.</p><div class="grid g4" id="cm">${skel(4)}</div><h2>Top commodity momentum pick <small>held until you refresh</small></h2><div id="cmp">${skel(1)}</div>${AD('comm-1')}`;
+j('/api/indices').then(d=>$('cm').innerHTML=d.commod.map(x=>idxCard(x,`location.hash='#/chart/${encodeURIComponent(x.symbol)}/${encodeURIComponent(x.name)}'`)).join('')||un).catch(()=>$('cm').innerHTML=un);
+getPicks().then(p=>{if(!p||!p.commodities.length){$('cmp').innerHTML=un;return}const l=[...p.commodities].sort((a,b)=>b.score-a.score);$('cmp').innerHTML=momHTML('Commodity','Commodity momentum pick',l);
+$('cm').insertAdjacentHTML('afterend',`<div class="card scroll" style="margin-top:12px"><h2 style="margin:0 0 8px">Momentum read for each <small>information only</small></h2><table><thead><tr><th>Name</th><th>Price</th><th>Change</th><th>Read</th><th>Score</th></tr></thead><tbody>`+p.commodities.map(x=>`<tr class="lk" onclick="location.hash='#/chart/${encodeURIComponent(x.symbol)}/${encodeURIComponent(x.name)}'"><td class="sym">${esc(x.name)}</td><td>${f(x.price)}</td><td>${pill(x.pct)}</td><td style="text-align:right">${esc(x.state)}</td><td>${x.score}</td></tr>`).join('')+'</tbody></table></div>')})};
+/* funds */
+R.funds=async el=>{el.innerHTML=`<h1>Top mutual funds</h1><p class="how">A mutual fund pools money from many people and a professional manager invests it. Funds are ranked inside each category by 3-year yearly return (CAGR), using official AMFI NAV data. Only Direct Growth plans. Past returns do not guarantee future returns.</p><div class="tabs" id="ft"></div><div id="fd">${skel(2)}</div>${AD('funds-1')}${AFF}<div class="note">Tip: a SIP (monthly auto-investment) in a diversified fund is the common beginner route. Check risk level and time horizon first. This list is information, not advice.</div>`;
+try{const FD=await j('/api/funds');let fc=FD.categories[0].category;const rc=v=>v==null?'<td>-</td>':`<td class="${v>=0?'up':'dn'}">${f(v,1)}%</td>`;const dr=()=>{$('ft').innerHTML=FD.categories.map(c=>`<button class="${c.category===fc?'on':''}" data-c="${esc(c.category)}">${esc(c.category)}</button>`).join('');const c=FD.categories.find(x=>x.category===fc);
+$('fd').innerHTML=`<div class="card scroll"><p class="how" style="margin-top:0"><b>${esc(c.category)}.</b> ${esc(c.risk)}</p><table><thead><tr><th>Fund</th><th>1Y</th><th>3Y/yr</th><th>5Y/yr</th><th>NAV</th></tr></thead><tbody>`+c.funds.map((x,i)=>`<tr><td><span class="sym">${i+1}. ${esc(x.name)}</span><span class="sub">${esc(x.house)}</span></td>${rc(x.r1)}${rc(x.r3)}${rc(x.r5)}<td>${f(x.nav)}</td></tr>`).join('')+'</tbody></table></div>'};
+$('ft').onclick=e=>{const b=e.target.closest('[data-c]');if(b){fc=b.dataset.c;dr()}};dr()}catch(e){$('fd').innerHTML=un}};
+/* watchlist */
+R.watch=async el=>{el.innerHTML=`<h1>My watchlist</h1><p class="how">Saved on this device only. Use the search box at the top to add a stock, or tap the star on any stock page.</p><div class="card" id="wl">${skel(2)}</div>`;let wl=WL();if(!wl.length)wl=['RELIANCE.NS','TCS.NS','HDFCBANK.NS','INFY.NS'];
+try{const d=await j('/api/quote?s='+encodeURIComponent(wl.join(',')));const m={};d.forEach(x=>m[x.symbol]=x);$('wl').innerHTML=stkTable(wl.map(s=>m[s]?{...m[s],symbol:s.replace('.NS','')}:{symbol:s.replace('.NS',''),price:null,pct:null}))}catch(e){$('wl').innerHTML=un}};
+R.news=async el=>{el.innerHTML=`<h1>Market news</h1>${AD('news-1')}<div class="card news" id="nw">${skel(3)}</div>`;j('/api/news').then(d=>$('nw').innerHTML=d.slice(0,30).map(newsRow).join('')).catch(()=>$('nw').innerHTML=un)};
+R.learn=async el=>{el.innerHTML=`<h1>Market basics in plain words</h1><div class="card"><dl class="learn"><dt>Nifty 50 and Sensex</dt><dd>Two scoreboards. When most big companies rise, they rise.</dd><dt>Gainers and losers</dt><dd>Stocks that rose or fell the most compared with yesterday's close.</dd><dt>Day high and day low</dt><dd>The highest and lowest price a stock touched today. Near the high, buyers are in control today. Near the low, sellers are.</dd><dt>Volume and volume buzz</dt><dd>Volume is how many shares changed hands. Volume buzz compares it with the usual amount at the same time of day. 2x means twice the normal activity.</dd><dt>Gap up and gap down</dt><dd>When a stock opens well above or below yesterday's close, often after news.</dd><dt>Momentum pick</dt><dd>The stock that scores highest on simple rules: volume, opening gap, closeness to the day high and day gain. It is a watchlist idea to study, not a signal to buy.</dd><dt>PE ratio</dt><dd>Price paid for each rupee of yearly profit. Compare it with similar companies.</dd><dt>52-week high and low</dt><dd>The highest and lowest prices in the last year.</dd><dt>FII and DII</dt><dd>Foreign and domestic institutional investors. Their daily buying and selling is closely watched.</dd><dt>IPO</dt><dd>When a company first sells shares to the public.</dd><dt>Futures and options</dt><dd>Contracts that follow a stock or index. They use leverage, so losses can be bigger than the money you put in.</dd><dt>Open interest and PCR</dt><dd>Open interest is the number of open contracts. PCR is puts divided by calls, a rough mood gauge.</dd><dt>NAV, CAGR and SIP</dt><dd>NAV is the price of a mutual fund unit. CAGR is the average yearly growth rate. SIP is investing a fixed amount every month.</dd><dt>VIX</dt><dd>The fear gauge. A high India VIX means traders expect big swings.</dd></dl></div>${PRO}`};
+/* ticker */
+async function tick(){try{const d=await j('/api/indices');const h=[...d.india.slice(0,5),...d.world.slice(0,4),...d.commod.slice(0,3)].map(x=>`<span><b>${esc(x.name)}</b> ${f(x.price)} <span class="${sgn(x.change)}">${arrow(x.change)} ${f(Math.abs(x.pct||0))}%</span></span>`).join('');$('tick').firstElementChild.innerHTML=h+h}catch(e){}}
+/* router */
+function route(){const h=(location.hash||'#/home').replace(/^#\//,'').split('/');const p=h[0]||'home';const fn=R[p]||R.home;
+document.querySelectorAll('nav.main a,.bn a[data-p]').forEach(a=>a.classList.toggle('on',a.dataset.p===(p==='stock'||p==='index'?'markets':p==='chart'?'world':p)));
+window.scrollTo(0,0);document.title='Nexora Markets - Indian stock market dashboard';fn($('app'),...h.slice(1)).catch(e=>{$('app').innerHTML=un})}
+addEventListener('hashchange',route);
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
-let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;$('inst').style.display='inline-block'});
-$('inst').onclick=async()=>{if(dp){dp.prompt();await dp.userChoice;dp=null;$('inst').style.display='none'}};
-setStatus();loadMom();loadIdx();loadMov();loadScr();loadNews();loadWl();loadFunds();
-setInterval(()=>{setStatus();loadMom();loadIdx();loadMov();loadScr();loadWl()},60000);setInterval(loadNews,300000);setInterval(loadFunds,3600000);
+let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;$('inst').style.display='inline-block'});$('inst').onclick=async()=>{if(dp){dp.prompt();await dp.userChoice;dp=null;$('inst').style.display='none'}};
+setStatus();tick();route();setInterval(()=>{setStatus();tick()},90000);
 </script></body></html>
