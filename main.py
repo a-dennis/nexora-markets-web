@@ -1,0 +1,363 @@
+import base64, urllib.error, json, os, time, threading, re, urllib.request, urllib.parse
+from concurrent.futures import ThreadPoolExecutor
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
+import xml.etree.ElementTree as ET
+from email.utils import parsedate_to_datetime
+
+UA = {"User-Agent": "Mozilla/5.0"}
+INDICES = [("^NSEI", "Nifty 50"), ("^BSESN", "Sensex"), ("^NSEBANK", "Bank Nifty"),
+           ("^CNXIT", "Nifty IT"), ("^INDIAVIX", "India VIX"), ("^CNXAUTO", "Nifty Auto"),
+           ("^CNXFMCG", "Nifty FMCG"), ("^CNXPHARMA", "Nifty Pharma")]
+N50 = """ADANIENT ADANIPORTS APOLLOHOSP ASIANPAINT AXISBANK BAJAJ-AUTO BAJFINANCE BAJAJFINSV BEL BHARTIARTL
+CIPLA COALINDIA DRREDDY EICHERMOT ETERNAL GRASIM HCLTECH HDFCBANK HDFCLIFE HEROMOTOCO HINDALCO HINDUNILVR
+ICICIBANK INDUSINDBK INFY ITC JIOFIN JSWSTEEL KOTAKBANK LT M&M MARUTI NESTLEIND NTPC ONGC POWERGRID
+RELIANCE SBILIFE SBIN SHRIRAMFIN SUNPHARMA TATACONSUM TATAMOTORS TATASTEEL TCS TECHM TITAN TRENT ULTRACEMCO WIPRO""".split()
+
+_cache = {}
+_lock = threading.Lock()
+
+def cached(key, ttl, fn):
+    now = time.time()
+    with _lock:
+        hit = _cache.get(key)
+        if hit and now - hit[0] < ttl:
+            return hit[1]
+    try:
+        val = fn()
+    except Exception as e:
+        with _lock:
+            hit = _cache.get(key)
+        if hit:
+            return hit[1]
+        raise
+    with _lock:
+        _cache[key] = (now, val)
+    return val
+
+def get(url, timeout=12):
+    req = urllib.request.Request(url, headers=UA)
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.read()
+
+def chart(sym, rng="1d", interval="5m"):
+    url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s" % (urllib.parse.quote(sym), rng, interval)
+    d = json.loads(get(url))["chart"]["result"][0]
+    m = d["meta"]
+    closes = (d["indicators"]["quote"][0].get("close") or [])
+    pts = [round(c, 2) for c in closes if c is not None]
+    price = m.get("regularMarketPrice")
+    prev = m.get("chartPreviousClose") or m.get("previousClose")
+    chg = (price - prev) if (price is not None and prev) else None
+    return {"symbol": sym, "price": price, "prev": prev, "change": chg,
+            "pct": (chg / prev * 100) if chg is not None and prev else None,
+            "high": m.get("regularMarketDayHigh"), "low": m.get("regularMarketDayLow"),
+            "volume": m.get("regularMarketVolume"), "time": m.get("regularMarketTime"),
+            "name": m.get("longName") or m.get("shortName") or sym, "spark": pts[-80:]}
+
+
+import datetime
+class RateLimited(Exception): pass
+_block_until = [0]
+
+def yget(url):
+    if time.time() < _block_until[0]:
+        raise RateLimited()
+    try:
+        return get(url)
+    except urllib.error.HTTPError as e:
+        if e.code == 429:
+            _block_until[0] = time.time() + 240
+            raise RateLimited()
+        raise
+
+def chart_full(sym, rng="5d", interval="15m"):
+    url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s" % (urllib.parse.quote(sym), rng, interval)
+    d = json.loads(yget(url))["chart"]["result"][0]
+    return d
+
+def intraday(sym):
+    d = chart_full(sym)
+    m = d["meta"]; off = m.get("gmtoffset", 19800)
+    ts = d.get("timestamp") or []
+    q = d["indicators"]["quote"][0]
+    days = {}
+    for i, t in enumerate(ts):
+        c = q["close"][i]
+        if c is None: continue
+        day = datetime.datetime.utcfromtimestamp(t + off).date().isoformat()
+        days.setdefault(day, []).append((q["open"][i], q["high"][i], q["low"][i], c, q["volume"][i] or 0))
+    keys = sorted(days)
+    if not keys: raise ValueError("nodata")
+    today = days[keys[-1]]; prevd = [days[k] for k in keys[:-1]]
+    price = m.get("regularMarketPrice") or today[-1][3]
+    prev = prevd[-1][-1][3] if prevd else m.get("chartPreviousClose")
+    op = today[0][0] or today[0][3]
+    hi = max(x[1] for x in today if x[1] is not None); lo = min(x[2] for x in today if x[2] is not None)
+    vol = sum(x[4] for x in today); n = len(today)
+    pv = [sum(x[4] for x in dd[:n]) for dd in prevd if len(dd) >= 1]
+    vratio = (vol / (sum(pv) / len(pv))) if pv and sum(pv) > 0 else None
+    chg = price - prev if prev else None
+    return {"symbol": sym, "name": m.get("longName") or m.get("shortName") or sym, "price": price, "prev": prev,
+            "change": chg, "pct": chg / prev * 100 if prev else None, "open": op, "high": hi, "low": lo, "volume": vol,
+            "gap": (op - prev) / prev * 100 if prev else None, "vratio": vratio,
+            "range": (hi - lo) / prev * 100 if prev else None,
+            "from_high": (price - hi) / hi * 100 if hi else None, "from_low": (price - lo) / lo * 100 if lo else None,
+            "time": m.get("regularMarketTime"), "day": keys[-1], "spark": [round(x[3], 2) for x in today][-30:]}
+
+def chart(sym, rng="1d", interval="5m"):
+    d = json.loads(yget("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s" % (urllib.parse.quote(sym), rng, interval)))["chart"]["result"][0]
+    m = d["meta"]
+    closes = (d["indicators"]["quote"][0].get("close") or [])
+    pts = [round(c, 2) for c in closes if c is not None]
+    price = m.get("regularMarketPrice")
+    prev = m.get("chartPreviousClose") or m.get("previousClose")
+    chg = (price - prev) if (price is not None and prev) else None
+    return {"symbol": sym, "price": price, "prev": prev, "change": chg,
+            "pct": (chg / prev * 100) if chg is not None and prev else None,
+            "time": m.get("regularMarketTime"), "name": m.get("longName") or m.get("shortName") or sym, "spark": pts[-80:]}
+
+WORLD = [("^GSPC", "S&P 500 (US)"), ("^IXIC", "Nasdaq (US)"), ("^DJI", "Dow Jones (US)"), ("^FTSE", "FTSE 100 (UK)"),
+         ("^GDAXI", "DAX (Germany)"), ("^N225", "Nikkei 225 (Japan)"), ("^HSI", "Hang Seng (HK)"), ("000001.SS", "Shanghai (China)")]
+COMMOD = [("GC=F", "Gold"), ("SI=F", "Silver"), ("CL=F", "Crude Oil (WTI)"), ("BZ=F", "Brent Crude"), ("NG=F", "Natural Gas"),
+          ("HG=F", "Copper"), ("USDINR=X", "US Dollar in INR"), ("BTC-USD", "Bitcoin (USD)")]
+
+STATE = {"idx": [], "world": [], "commod": [], "stocks": [], "funds": [], "stocks_t": 0, "idx_t": 0, "funds_t": 0, "err": ""}
+
+def fetch_many(pairs, workers=3, fn=chart):
+    out = []
+    def one(p):
+        try:
+            time.sleep(0.12)
+            r = fn(p[0]); r = dict(r); r["name"] = p[1]; return r
+        except Exception:
+            return None
+    with ThreadPoolExecutor(workers) as ex:
+        for r in ex.map(one, pairs):
+            if r: out.append(r)
+    return out
+
+def market_hours():
+    n = datetime.datetime.utcnow() + datetime.timedelta(hours=5, minutes=30)
+    m = n.hour * 60 + n.minute
+    return n.weekday() < 5 and 540 <= m <= 945
+
+def refresher():
+    last = {"idx": 0, "stk": 0, "fund": 0}
+    while True:
+        now = time.time()
+        try:
+            if now - last["idx"] > 120:
+                last["idx"] = now
+                for key, lst in (("idx", INDICES), ("world", WORLD), ("commod", COMMOD)):
+                    r = fetch_many(lst)
+                    if r: STATE[key] = r
+                if STATE["idx"]: STATE["idx_t"] = now
+            stk_every = 180 if market_hours() else 1800
+            if now - last["stk"] > stk_every:
+                last["stk"] = now
+                r = fetch_many([(s + ".NS", s) for s in N50], 3, intraday)
+                for x in r:
+                    x["symbol"] = x["symbol"].replace(".NS", "")
+                if len(r) >= 25: STATE["stocks"] = r; STATE["stocks_t"] = now
+            if now - last["fund"] > 6 * 3600 or not STATE["funds"]:
+                last["fund"] = now
+                r = load_funds()
+                if r: STATE["funds"] = r; STATE["funds_t"] = now
+        except Exception as e:
+            STATE["err"] = repr(e)
+        time.sleep(15)
+
+FUNDS = {"Large Cap": [118632, 120586, 119598, 120465, 120152],
+ "Flexi Cap": [122639, 118955, 120662, 120843, 119718],
+ "Mid Cap": [118989, 120505, 140228, 147704],
+ "Small Cap": [118778, 120828, 125497, 147946, 125354],
+ "Index (Nifty 50)": [119063],
+ "Tax Saver (ELSS)": [120847, 118473, 135781, 120503, 119723],
+ "Balanced / Hybrid": [120377, 118968],
+ "Debt / Liquid": [119091, 119800, 120692]}
+RISK = {"Large Cap": "Medium risk. Big, stable companies.", "Flexi Cap": "Medium to high risk. Manager picks companies of any size.",
+        "Mid Cap": "High risk. Medium-size companies, bigger ups and downs.", "Small Cap": "Very high risk. Small companies, big swings, needs 7+ years.",
+        "Index (Nifty 50)": "Medium risk. Simply copies the Nifty 50, low cost.", "Tax Saver (ELSS)": "High risk. Locked for 3 years, saves tax under 80C (old regime).",
+        "Balanced / Hybrid": "Lower risk than pure equity. Mix of shares and bonds.", "Debt / Liquid": "Low risk. Parks money, returns near FD rates."}
+
+def nav_return(navs, days, cagr):
+    # navs: list of (date, nav) newest first
+    latest = navs[0]
+    target = latest[0] - datetime.timedelta(days=days)
+    for d, v in navs:
+        if d <= target:
+            r = latest[1] / v
+            return (r ** (365.0 / days) - 1) * 100 if cagr else (r - 1) * 100
+    return None
+
+def load_funds():
+    out = []
+    for cat, codes in FUNDS.items():
+        for c in codes:
+            try:
+                d = json.loads(get("https://api.mfapi.in/mf/%d" % c, 20))
+                navs = [(datetime.datetime.strptime(x["date"], "%d-%m-%Y").date(), float(x["nav"])) for x in d["data"] if x.get("nav")]
+                if len(navs) < 30: continue
+                nm = re.sub(r" - Direct Plan.*$| - Direct.*$| Direct Plan.*$", "", d["meta"]["scheme_name"], flags=re.I).strip()
+                out.append({"code": c, "name": nm, "house": d["meta"]["fund_house"], "category": cat, "nav": navs[0][1],
+                            "nav_date": navs[0][0].isoformat(), "r1": nav_return(navs, 365, False),
+                            "r3": nav_return(navs, 1095, True), "r5": nav_return(navs, 1825, True)})
+            except Exception:
+                pass
+            time.sleep(0.1)
+    return out
+
+def screeners():
+    s = [x for x in STATE["stocks"] if x.get("pct") is not None]
+    def top(lst, k=6): return lst[:k]
+    return {
+      "near_high": top(sorted([x for x in s if x["pct"] > 0.3 and x["from_high"] is not None and x["from_high"] > -0.4], key=lambda x: -x["pct"])),
+      "near_low": top(sorted([x for x in s if x["pct"] < -0.3 and x["from_low"] is not None and x["from_low"] < 0.4], key=lambda x: x["pct"])),
+      "volume": top(sorted([x for x in s if x["vratio"] and x["vratio"] >= 1.3], key=lambda x: -x["vratio"])),
+      "gap_up": top(sorted([x for x in s if x["gap"] is not None and x["gap"] >= 0.8], key=lambda x: -x["gap"])),
+      "gap_down": top(sorted([x for x in s if x["gap"] is not None and x["gap"] <= -0.8], key=lambda x: x["gap"])),
+      "volatile": top(sorted([x for x in s if x["range"]], key=lambda x: -x["range"])),
+    }
+
+def momentum():
+    out = []
+    for x in STATE["stocks"]:
+        if x.get("pct") is None or x["pct"] <= 0: continue
+        vr = min(x["vratio"] or 0, 4) / 4
+        gap = min(max(x["gap"] or 0, 0), 3) / 3
+        nh = 1 - min(max(-(x["from_high"] or 0), 0), 1.0) / 1.0
+        pc = min(x["pct"], 4) / 4
+        score = round(100 * (0.30 * vr + 0.20 * gap + 0.30 * nh + 0.20 * pc))
+        y = dict(x); y["score"] = score
+        y["reasons"] = []
+        if x["vratio"] and x["vratio"] >= 1.3: y["reasons"].append("Volume is %.1fx its usual level for this time" % x["vratio"])
+        if x["gap"] and x["gap"] >= 0.8: y["reasons"].append("Opened %.1f%% above yesterday's close" % x["gap"])
+        if x["from_high"] is not None and x["from_high"] > -0.4: y["reasons"].append("Trading within 0.4% of today's high")
+        if x["pct"] >= 1: y["reasons"].append("Up %.1f%% on the day" % x["pct"])
+        out.append(y)
+    out.sort(key=lambda z: -z["score"])
+    return {"list": out[:15], "asof": STATE["stocks_t"], "day": (STATE["stocks"] or [{}])[0].get("day")}
+
+def movers():
+    s = [x for x in STATE["stocks"] if x.get("pct") is not None]
+    srt = sorted(s, key=lambda x: x["pct"], reverse=True)
+    adv = sum(1 for x in s if x["pct"] > 0)
+    return {"gainers": srt[:8], "losers": srt[::-1][:8], "advances": adv, "declines": len(s) - adv, "count": len(s),
+            "active": sorted(s, key=lambda x: (x["volume"] or 0) * (x["price"] or 0), reverse=True)[:8], "asof": STATE["stocks_t"],
+            "day": s[0]["day"] if s else None}
+
+def funds_view():
+    f = STATE["funds"]
+    cats = {}
+    for x in f:
+        cats.setdefault(x["category"], []).append(x)
+    out = []
+    for c, lst in cats.items():
+        lst.sort(key=lambda x: -(x["r3"] if x["r3"] is not None else (x["r1"] or -999)))
+        out.append({"category": c, "risk": RISK.get(c, ""), "funds": lst})
+    return {"categories": out, "asof": STATE["funds_t"]}
+
+def quote(sym):
+    sym = sym.upper().strip()
+    if not re.match(r"^[A-Z0-9&\-\.\^=]{1,20}$", sym):
+        raise ValueError("bad symbol")
+    return cached("q:" + sym, 30, lambda: chart(sym, "1d", "5m"))
+
+def search(q):
+    url = "https://query2.finance.yahoo.com/v1/finance/search?quotesCount=10&newsCount=0&q=" + urllib.parse.quote(q)
+    d = json.loads(get(url))
+    return [{"symbol": x["symbol"], "name": x.get("longname") or x.get("shortname"), "exch": x.get("exchDisp")}
+            for x in d.get("quotes", []) if x.get("exchange") in ("NSI", "BSE") and x.get("quoteType") in ("EQUITY", "INDEX", "ETF")]
+
+FEEDS = [("Economic Times", "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms"),
+         ("Economic Times", "https://economictimes.indiatimes.com/markets/stocks/rssfeeds/2146842.cms"),
+         ("Google News", "https://news.google.com/rss/search?q=nifty+OR+sensex+OR+%22stock+market%22+india+when:1d&hl=en-IN&gl=IN&ceid=IN:en")]
+
+def news():
+    def go():
+        items = []
+        for src, url in FEEDS:
+            try:
+                root = ET.fromstring(get(url))
+            except Exception:
+                continue
+            for it in root.iter("item"):
+                t = (it.findtext("title") or "").strip()
+                link = (it.findtext("link") or "").strip()
+                pub = it.findtext("pubDate")
+                s = src
+                if src == "Google News":
+                    m = re.match(r"^(.*) - ([^-]+)$", t)
+                    if m:
+                        t, s = m.group(1), m.group(2)
+                try:
+                    ts = parsedate_to_datetime(pub).timestamp()
+                except Exception:
+                    ts = 0
+                if t and link:
+                    items.append({"title": t, "link": link, "source": s, "ts": ts})
+        seen, out = set(), []
+        for i in sorted(items, key=lambda x: -x["ts"]):
+            k = i["title"].lower()[:60]
+            if k not in seen:
+                seen.add(k)
+                out.append(i)
+        return out[:40]
+    return cached("news", 300, go)
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+ICON192 = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAE4UlEQVR4nO3dS07cQBRG4UuUWbKHRAyDxBqYsxTWw1KY9xqQeoqyiCwgg5ZKlo2N7b8e91adbxShjttSHcrlB913P379MeCsb613ALERECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJN9b7wAyuH97nf3k4/mlzlvf8V0ZoS3TmaqQEQFFtZ3OVNGMWAOFtL+eoy8+ioDiORFEuYYICBICCub0XFJoEiIgSAgoEnEWKTEJERAkBAQJAUFCQJAQUBhFLyifRkAxZKmnxE0xAgrA59xzQ0De5aqn0D15AoKEgFxzPv0YAXnmvx7jmWi33J52zRCQR3o91R6qJyB3TtdTLZop1kC+xKrHCMiVcPUYAXWgYT1GQH6cm37a1mME5ITnu13bCKi9iEufhIAaC12PEVBb0esxAmqog3qMgMJxVY8RUCtBT9qXCKiBuCftSwRUWx9Ln4SAquqsHiOgmvqrxwiomi7rMQJyznk9RkB1dHPSvkRAxfV00r5EQGX1uvRJCKig7usxAipnhHqMgAoZpB4joBLGqccIyI+I9RgBZdfxJZ9PEVBOfV/y+VQ/fxv/7+81/fvxeqn/Oz3U0ifp4QvnpulM1cxozHqsg0PYWj1m9v7wVOeYMmw9Fn0G2qgnebxerORQjVyPhZ6B/Hzt4wl91GNxA7p/e31/eNrzyvSyEg2NdtK+FDIg5Vv7MmbkbVZrIl5A+rBlGfjBlz5JsIBy/dK3+uq/zuqxWGdhy2Hbswy6nYWtOTGi1DMVZgYqtOA4ulnqmYkR0Nqwbc8ue16wsfGMeq3HQhzCvhzgtQPZnnqmvhxmTtqXvAe0f8ymGR1NJ9kYbA5en3IdUKsLLcshp541ftdADS/Tzd6aejY4Daj5mKUdaL4nznk8hGUZs7b3GQapxxzOQLl+4xsO4Tj1mLcZKPvxQpmHzp3WDVWPuQqo3Grj6JZPX1garR7zcwgrulY9NK4b99d2PoE0FBczULUzndMXtafW5qEBpx/zMAPVPE8uN8Zj1mPNA6p/lWXjPx59RlbfmQ60DKjVNbqP55eMQz5yPdYwoOZXeLNsZ/B6rFVAzevJsjXqsSYBOaknbTNtdufVwtPPinSpdkCu6lE2zvRzUzUgn/VM32LnM7LUk9QLyHM96Y0+nl82Gvr5+6Hm/oRQKSD/9Uzf8fF6ubWSpJ9Qz0yNWxmB6sFRxT+hbPYJLDwX0ZmCM9DGh/fwXEQ3Sq2Btj/6afuuE/UEUiSgPR8cttYQ9cTS/nGOKeoJJ39Ae6afm9kkRD0ReZmBqCcoFwFRT1ztA6Ke0BoHRD3R5Q9odhcpyyvhVvtDGEIrEtCeqYXppw+lZqDtPqinG8Uf55hdVySdzrj402bExSIaEgKChIAgISBICAgSAoKEgCAhIEgICBICgoSAICEgSAgIEgKChIAgISBICAgSAoKEgCAhIEgICBICgoSAICEgSAgIEgKChIAgISBICAgSAoKEgCAhIEgICBICgoSAICEgSAgIEgKChIAgISBICAgSAoKEgCAhIEgICBICgoSAICEgSAgIkv++46Dz9bQy7AAAAABJRU5ErkJggg==")
+ICON512 = base64.b64decode("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")
+MANIFEST = '{"name":"Nexora Markets","short_name":"Nexora","description":"Free market dashboard for India and the world","start_url":"/?src=pwa","scope":"/","display":"standalone","orientation":"portrait","background_color":"#0b1f2a","theme_color":"#0b1f2a","icons":[{"src":"/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},{"src":"/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}\n'
+SW = "const C='nexora-v1';\nself.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['/','/icon-192.png'])));self.skipWaiting()});\nself.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))));self.clients.claim()});\nself.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(e.request.method!=='GET'||u.origin!==location.origin)return;\nif(u.pathname.startsWith('/api/')){e.respondWith(fetch(e.request).then(r=>{const c=r.clone();caches.open(C).then(x=>x.put(e.request,c));return r}).catch(()=>caches.match(e.request)));return}\ne.respondWith(fetch(e.request).then(r=>{const c=r.clone();caches.open(C).then(x=>x.put(e.request,c));return r}).catch(()=>caches.match(e.request).then(m=>m||caches.match('/'))))});\n"
+STATIC = {'/manifest.webmanifest': (MANIFEST.encode(), 'application/manifest+json'), '/sw.js': (SW.encode(), 'application/javascript'),
+  '/icon-192.png': (ICON192, 'image/png'), '/icon-512.png': (ICON512, 'image/png'), '/apple-touch-icon.png': (ICON192, 'image/png')}
+
+class H(BaseHTTPRequestHandler):
+    def log_message(self, *a): pass
+    def send(self, code, body, ctype="application/json", cache="no-store"):
+        if isinstance(body, str): body = body.encode()
+        self.send_response(code)
+        self.send_header("Content-Type", ctype + "; charset=utf-8" if ctype.startswith("text") or "json" in ctype else ctype)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", cache)
+        self.end_headers()
+        if self.command != "HEAD": self.wfile.write(body)
+    do_HEAD = lambda self: self.do_GET()
+    def do_GET(self):
+        u = urllib.parse.urlparse(self.path); p = u.path; q = urllib.parse.parse_qs(u.query)
+        try:
+            if p in ("/", "/index.html"):
+                return self.send(200, open(os.path.join(HERE, "index.html"), "rb").read(), "text/html", "public, max-age=60")
+            if p == "/healthz": return self.send(200, "ok", "text/plain")
+            if p == "/robots.txt": return self.send(200, "User-agent: *\nAllow: /\n", "text/plain")
+            if p == "/api/indices": return self.send(200, json.dumps({"india": STATE["idx"], "world": STATE["world"], "commod": STATE["commod"], "asof": STATE["idx_t"]}))
+            if p == "/api/screens": return self.send(200, json.dumps({"s": screeners(), "asof": STATE["stocks_t"], "day": (STATE["stocks"] or [{}])[0].get("day")}))
+            if p == "/api/momentum": return self.send(200, json.dumps(momentum()))
+            if p in STATIC:
+                body, ct = STATIC[p]
+                return self.send(200, body, ct, "public, max-age=3600" if p != "/sw.js" else "no-cache")
+            if p == "/api/funds": return self.send(200, json.dumps(funds_view()))
+            if p == "/api/movers": return self.send(200, json.dumps(movers()))
+            if p == "/api/news": return self.send(200, json.dumps(news()))
+            if p == "/api/search": return self.send(200, json.dumps(search(q.get("q", [""])[0])))
+            if p == "/api/quote":
+                syms = [s for s in q.get("s", [""])[0].split(",") if s][:25]
+                with ThreadPoolExecutor(8) as ex:
+                    r = list(ex.map(lambda s: (lambda x: x)(_try(quote, s)), syms))
+                return self.send(200, json.dumps([x for x in r if x]))
+            if p == "/api/status":
+                return self.send(200, json.dumps({"ok": True, "now": time.time()}))
+            return self.send(404, "not found", "text/plain")
+        except Exception as e:
+            return self.send(502, json.dumps({"error": "upstream unavailable"}))
+
+def _try(f, *a):
+    try: return f(*a)
+    except Exception: return None
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", "8000"))
+    threading.Thread(target=refresher, daemon=True).start()
+    ThreadingHTTPServer(("0.0.0.0", port), H).serve_forever()
