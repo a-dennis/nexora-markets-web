@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nexora Markets - Nifty, Sensex, Intraday Stock Screener, World Markets, Mutual Funds</title>
+<meta name="description" content="Free, beginner-friendly Indian market dashboard: Nifty, Sensex, intraday stock screens, world markets, gold and crude, top mutual funds and news. Delayed data, information only.">
+<link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#0b1f2a"><link rel="icon" href="/icon-192.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nexora"><meta property="og:title" content="Nexora Markets"><meta property="og:description" content="Free beginner-friendly market dashboard for India and the world.">
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--ink:#101828;--mut:#667085;--line:#e4e7ec;--up:#047857;--dn:#c0262d;--brand:#0f766e;--upbg:#e6f6ef;--dnbg:#fdecec}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#0b1f2a;color:#fff}.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0 8px;flex-wrap:wrap}
+.logo{font-weight:800;font-size:20px}.logo b{color:#2dd4bf}
+.status{font-size:13px;color:#cbd5e1;display:flex;gap:10px;align-items:center}
+.dot{width:9px;height:9px;border-radius:50%;background:#94a3b8;display:inline-block}.dot.open{background:#22c55e;box-shadow:0 0 0 4px #22c55e33}
+nav{display:flex;gap:4px;overflow-x:auto;padding-bottom:0}nav a{color:#cbd5e1;text-decoration:none;padding:9px 14px;font-size:14px;white-space:nowrap;border-bottom:3px solid transparent;cursor:pointer}
+nav a.on{color:#fff;border-color:#2dd4bf;font-weight:600}
+.delay{background:#fef3c7;color:#92400e;font-size:12.5px;padding:7px 12px;text-align:center}
+main{padding:8px 0 30px}section{display:none}section.on{display:block}
+h2{font-size:17px;margin:24px 0 4px;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px}h2 small{font-weight:400;color:var(--mut);font-size:12px}
+.how{color:var(--mut);font-size:13.5px;margin:0 0 10px}
+.grid{display:grid;gap:12px}.idx{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.ic .n{color:var(--mut);font-size:13px}.ic .p{font-size:21px;font-weight:700;margin:2px 0}
+.up{color:var(--up)}.dn{color:var(--dn)}.ic svg{width:100%;height:36px;margin-top:6px}
+.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}@media(max-width:760px){.two{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse}td,th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;font-size:14px}
+th{font-size:12px;color:var(--mut);font-weight:600}td:first-child,th:first-child{text-align:left}tr:last-child td{border:0}
+.sym{font-weight:600}.sub{display:block;color:var(--mut);font-size:12px;font-weight:400;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-weight:600;font-size:13px}.pill.up{background:var(--upbg)}.pill.dn{background:var(--dnbg)}.pill.n{background:#eef2f6;color:#344054}
+.bar{height:10px;border-radius:6px;overflow:hidden;display:flex;background:var(--line);margin:8px 0 4px}.bar i{display:block;height:100%}
+.search{display:flex;position:relative;margin-bottom:10px}input{flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:#fff}
+.sug{position:absolute;top:44px;left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:10px;z-index:5;box-shadow:0 8px 24px #0001;max-height:260px;overflow:auto}
+.sug div{padding:9px 12px;cursor:pointer;font-size:14px}.sug div:hover{background:var(--bg)}
+button.x{border:0;background:none;color:var(--mut);cursor:pointer;font-size:16px}
+.news a{display:block;padding:11px 0;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}.news a:last-child{border:0}
+.news a:hover b{color:var(--brand)}.news span{color:var(--mut);font-size:12px}
+.empty{color:var(--mut);padding:14px 0;text-align:center;font-size:14px}
+.scr h3{margin:0 0 2px;font-size:15px}.scr .why{font-size:13px;color:var(--mut);margin:0 0 8px}
+.note{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:10px 12px;font-size:13.5px;margin:12px 0}
+.warn{background:#fff7ed;border:1px solid #fed7aa}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 13px;cursor:pointer;font-size:13px}.tabs button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.learn dt{font-weight:700;margin-top:12px}.learn dd{margin:2px 0 0;color:#344054}
+footer{color:var(--mut);font-size:12.5px;padding:10px 0 40px}footer p{margin:6px 0}
+.rk{color:var(--mut);font-weight:700;width:24px}
+
+.mom{background:linear-gradient(135deg,#0b1f2a,#134e4a);color:#fff;border:0;position:relative;overflow:hidden}
+.mom .tag{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:#5eead4;font-weight:700}
+.mom .big{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:6px 0}
+.mom .nm{font-size:26px;font-weight:800}.mom .nm small{display:block;font-size:13px;font-weight:400;color:#99f6e4}
+.mom .pr{font-size:22px;font-weight:700;text-align:right}.mom .pr span{display:block;font-size:14px}
+.mom ul{margin:6px 0 10px;padding-left:18px;font-size:13.5px;color:#d1fae5}
+.mom .meter{height:8px;background:#ffffff26;border-radius:6px;overflow:hidden;margin:6px 0 2px}.mom .meter i{display:block;height:100%;background:#2dd4bf}
+.mom .fine{font-size:11.5px;color:#a7f3d0;margin-top:8px;opacity:.9}
+.mom button{background:#2dd4bf;color:#042f2e;border:0;border-radius:999px;padding:7px 16px;font-weight:700;cursor:pointer;font-size:13px}
+.mom .up{color:#6ee7b7}.mom .dn{color:#fca5a5}
+.ad{border:1px dashed #cbd5e1;border-radius:10px;min-height:90px;display:flex;align-items:center;justify-content:center;color:#98a2b3;font-size:12px;margin:18px 0;background:#fafbfc;text-align:center}
+.pro{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fde68a;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.pro b{font-size:15px}.pro p{margin:2px 0 0;font-size:13px;color:#78350f}.pro button{background:#92400e;color:#fff;border:0;border-radius:999px;padding:8px 18px;font-weight:600;cursor:pointer}
+#inst{display:none;background:#2dd4bf;color:#042f2e;border:0;border-radius:999px;padding:5px 12px;font-weight:700;font-size:12px;cursor:pointer}
+.ic{transition:transform .15s}.ic:hover{transform:translateY(-2px);box-shadow:0 6px 18px #0000000f}
+@media(max-width:600px){.mom .nm{font-size:22px}body{font-size:14.5px}.idx{grid-template-columns:1fr 1fr}.ic .p{font-size:18px}}
+@media(display-mode:standalone){.delay{position:sticky;top:0;z-index:9}}
+</style></head><body>
+<header><div class="wrap"><div class="top"><div class="logo">Nexora <b>Markets</b></div>
+<div class="status"><span class="dot" id="dot"></span><span id="mstat">Market</span><span id="upd"></span><button id="inst">Install app</button></div></div>
+<nav id="nav"><a data-t="home" class="on">Overview</a><a data-t="ideas">Intraday screens</a><a data-t="world">World & commodities</a><a data-t="funds">Mutual funds</a><a data-t="watch">Watchlist</a><a data-t="news">News</a><a data-t="learn">Learn</a></nav></div></header>
+<div class="delay">Data is delayed (up to 15 minutes or more) and shown for information only. Nothing here is a recommendation to buy or sell.</div>
+<main class="wrap">
+
+<section id="t-home" class="on">
+<h2 style="margin-top:14px">Top momentum stock <small>Nifty 50 scan</small></h2><div class="card mom" id="mom"><div class="tag">Momentum watchlist pick</div><div class="empty" style="color:#99f6e4">Scanning Nifty 50...</div></div>
+<h2>Indian indices <small id="u1"></small></h2><p class="how">An index is a scoreboard for a group of big companies. Nifty 50 tracks 50 large NSE companies. Sensex tracks 30 large BSE companies. Green means up from yesterday's close, red means down.</p>
+<div class="grid idx" id="idx"></div>
+<div class="card pro"><div><b>Nexora Pro (coming soon)</b><p>Price alerts, more stocks in the screens, saved screens and an ad-free view.</p></div><button onclick="alert('Pro is coming soon. We will announce it here.')">Notify me</button></div>
+<h2>How many stocks are up today? <small>Nifty 50 stocks</small></h2>
+<div class="card"><div class="bar" id="bar"></div><div id="breadth" style="font-size:13px;color:var(--mut)"></div><div id="mood" style="margin-top:6px;font-size:14px"></div></div>
+<div class="grid two">
+<div><h2>Top gainers <small>rose the most</small></h2><div class="card" id="gain"></div></div>
+<div><h2>Top losers <small>fell the most</small></h2><div class="card" id="lose"></div></div></div>
+<div class="ad" data-slot="home-mid">Advertisement</div>
+<h2>Most active <small>most money traded</small></h2><p class="how">Heavily traded stocks have many buyers and sellers, so you can enter and exit easily.</p><div class="card" id="act"></div>
+</section>
+
+<section id="t-ideas">
+<h2>Intraday screens <small id="u2"></small></h2>
+<div class="note warn"><b>Read this first.</b> These screens only <i>sort</i> today's Nifty 50 stocks by simple rules. They are not buy or sell signals and do not predict anything. Intraday trading is risky and most beginners lose money. Learn first, practise with small amounts, and never trade money you cannot afford to lose.</div>
+<div class="ad" data-slot="intraday-top">Advertisement</div><div class="grid three scr" id="scr"><div class="empty">Loading...</div></div>
+</section>
+
+<section id="t-world">
+<h2>World markets <small id="u3"></small></h2><p class="how">Overseas markets often set the mood for India's next morning. If US markets fell last night, Indian markets often open weak, and the other way round.</p>
+<div class="grid idx" id="world"></div>
+<h2>Commodities, currency and crypto</h2><p class="how">Gold and silver are metals people buy as a safe store of value. Crude oil prices affect petrol costs and inflation. A weaker rupee (higher USD/INR) makes imports costlier.</p>
+<div class="grid idx" id="commod"></div>
+</section>
+
+<section id="t-funds">
+<h2>Top mutual funds <small id="u4"></small></h2>
+<p class="how">A mutual fund pools money from many people and a professional manager invests it. Funds are ranked here inside each category by 3-year yearly return (CAGR), using official AMFI NAV data. Only Direct Growth plans are shown. Past returns do not guarantee future returns.</p>
+<div class="tabs" id="ftabs"></div><div id="funds"><div class="empty">Loading...</div></div>
+<div class="note">Tip: a SIP (monthly auto-investment) in a diversified fund is the common beginner route. Check risk level and your time horizon before picking. This list is information, not advice.</div>
+</section>
+
+<section id="t-watch">
+<h2>My watchlist <small>saved on this device only</small></h2><p class="how">Add stocks you want to keep an eye on. Search by company name.</p>
+<div class="card"><div class="search"><input id="q" placeholder="Search a stock, e.g. Tata Motors" autocomplete="off"><div class="sug" id="sug" hidden></div></div><div id="wl"></div></div>
+</section>
+
+<section id="t-news"><div class="ad" data-slot="news-top">Advertisement</div><h2>Market news <small>Economic Times, Google News</small></h2><div class="card news" id="news"><div class="empty">Loading...</div></div></section>
+
+<section id="t-learn"><h2>Market basics in plain words</h2>
+<div class="card"><dl class="learn">
+<dt>Nifty 50 and Sensex</dt><dd>Two scoreboards. When most big companies rise, they rise.</dd>
+<dt>Gainers and losers</dt><dd>Stocks that rose or fell the most compared with yesterday's closing price.</dd>
+<dt>Day high and day low</dt><dd>The highest and lowest price a stock touched today. A stock near its high shows buyers are in control today. Near its low, sellers are.</dd>
+<dt>Volume and "volume buzz"</dt><dd>Volume is how many shares changed hands. Volume buzz compares it with the usual amount at the same time of day. 2x means twice the normal activity.</dd>
+<dt>Gap up / gap down</dt><dd>When a stock opens well above or below yesterday's close, often after news. Gaps can shrink or grow during the day.</dd>
+<dt>Intraday range</dt><dd>How far a stock moved from low to high today. Bigger range means bigger risk and bigger possible swings both ways.</dd>
+<dt>Intraday trading</dt><dd>Buying and selling the same day. It is fast and risky. Stop-losses (a pre-set exit price) limit damage but do not remove risk.</dd>
+<dt>NAV</dt><dd>Net Asset Value: the price of one unit of a mutual fund.</dd>
+<dt>CAGR</dt><dd>Average yearly growth rate over several years. 15% CAGR for 3 years means the money grew about 15% each year.</dd>
+<dt>SIP</dt><dd>Systematic Investment Plan: investing a fixed amount every month.</dd>
+<dt>VIX</dt><dd>The fear gauge. A high India VIX means traders expect big swings.</dd>
+</dl></div></section>
+</main>
+<footer class="wrap">
+<p>Nexora Markets shows prices from public sources (Yahoo Finance), mutual fund NAVs from AMFI via mfapi.in, and headlines from Economic Times and Google News. Quotes are delayed and may be inaccurate or unavailable. Screens and rankings are automatic and informational only, not investment advice or a recommendation. Nexora is not a SEBI registered investment adviser or research analyst. Investments in securities are subject to market risk. Do your own research or consult a registered adviser.</p>
+<p>&copy; Nexora</p></footer>
+<script>
+const $=id=>document.getElementById(id);
+const f=(n,d=2)=>n==null?'-':Number(n).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
+const sgn=n=>n>=0?'up':'dn',arrow=n=>n>=0?'▲':'▼';
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function spark(a,up){if(!a||a.length<2)return'';const mn=Math.min(...a),mx=Math.max(...a),w=200,h=36,r=(mx-mn)||1;
+const p=a.map((v,i)=>(i/(a.length-1)*w).toFixed(1)+','+(h-2-(v-mn)/r*(h-4)).toFixed(1)).join(' ');
+return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline fill="none" stroke="${up?'#047857':'#c0262d'}" stroke-width="1.8" points="${p}"/></svg>`}
+function isOpen(){const n=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));const d=n.getDay(),m=n.getHours()*60+n.getMinutes();return d>0&&d<6&&m>=555&&m<930}
+function setStatus(){const o=isOpen();$('dot').className='dot'+(o?' open':'');$('mstat').textContent=o?'NSE open':'NSE closed (showing last session)'}
+function ist(t){return t?new Date(t*1000).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+' IST':''}
+async function j(u){const r=await fetch(u);if(!r.ok)throw 0;return r.json()}
+const asof=t=>t?'Updated '+ist(t):'';
+function card(x){const s=sgn(x.change||0);return `<div class="card ic"><div class="n">${esc(x.name)}</div><div class="p">${f(x.price)}</div><div class="${s}">${arrow(x.change||0)} ${f(Math.abs(x.change||0))} (${f(Math.abs(x.pct||0))}%)</div>${spark(x.spark,s==='up')}</div>`}
+const pill=p=>`<span class="pill ${sgn(p)}">${p>=0?'+':''}${f(p)}%</span>`;
+function rows(a){return `<table><tr><th>Stock</th><th>Price</th><th>Change</th></tr>`+a.map(x=>`<tr><td class="sym">${x.symbol}<span class="sub">${esc(x.name)}</span></td><td>${f(x.price)}</td><td>${pill(x.pct)}</td></tr>`).join('')+'</table>'}
+const un='<div class="empty">Data unavailable right now. Retrying...</div>';
+async function loadIdx(){try{const d=await j('/api/indices');
+$('idx').innerHTML=d.india.map(card).join('')||un;$('world').innerHTML=d.world.map(card).join('')||un;$('commod').innerHTML=d.commod.map(card).join('')||un;
+['u1','u3'].forEach(i=>$(i).textContent=asof(d.asof))}catch(e){$('idx').innerHTML=un}}
+async function loadMov(){try{const d=await j('/api/movers');if(!d.count)throw 0;$('gain').innerHTML=rows(d.gainers);$('lose').innerHTML=rows(d.losers);$('act').innerHTML=rows(d.active);
+const a=d.advances,b=d.declines,t=a+b;$('bar').innerHTML=`<i style="width:${a/t*100}%;background:var(--up)"></i><i style="width:${b/t*100}%;background:var(--dn)"></i>`;
+$('breadth').innerHTML=`<b class="up">${a} up</b> &middot; <b class="dn">${b} down</b> of ${t} stocks`;
+const r=a/t;$('mood').textContent=r>.65?'Most big stocks are rising. The mood is positive.':r<.35?'Most big stocks are falling. The mood is negative.':'Mixed day. Gains and losses are fairly balanced.'}catch(e){['gain','lose','act'].forEach(i=>$(i).innerHTML=un)}}
+const SC=[['near_high','Trading near today\'s high','Up on the day and within 0.4% of the high. Buyers are in control so far.',x=>`${pill(x.pct)}`],
+['near_low','Trading near today\'s low','Down on the day and within 0.4% of the low. Sellers are in control so far.',x=>`${pill(x.pct)}`],
+['volume','Volume buzz','Trading at least 1.3x its usual volume for this time of day. Something may be drawing attention.',x=>`<span class="pill n">${f(x.vratio,1)}x vol</span>`],
+['gap_up','Gap up at open','Opened at least 0.8% above yesterday\'s close. Often follows news.',x=>`<span class="pill up">gap +${f(x.gap)}%</span>`],
+['gap_down','Gap down at open','Opened at least 0.8% below yesterday\'s close. Often follows news.',x=>`<span class="pill dn">gap ${f(x.gap)}%</span>`],
+['volatile','Widest range today','Biggest gap between today\'s low and high. More movement means more risk both ways.',x=>`<span class="pill n">range ${f(x.range)}%</span>`]];
+async function loadScr(){try{const d=await j('/api/screens');$('u2').textContent=asof(d.asof)+(d.day?' - session '+d.day:'');
+$('scr').innerHTML=SC.map(([k,t,w,fn])=>{const a=d.s[k]||[];return `<div class="card"><h3>${t}</h3><p class="why">${w}</p>`+(a.length?'<table>'+a.map(x=>`<tr><td class="sym">${x.symbol}<span class="sub">${f(x.price)}</span></td><td>${fn(x)}</td><td>${pill(x.pct)}</td></tr>`).join('')+'</table>':'<div class="empty">No stock matches right now.</div>')+'</div>'}).join('')}catch(e){$('scr').innerHTML=un}}
+let FD=null,fc=null;
+async function loadFunds(){try{FD=await j('/api/funds');$('u4').textContent=FD.asof?'NAVs as of latest AMFI update':'';if(!fc)fc=FD.categories[0]&&FD.categories[0].category;drawFunds()}catch(e){$('funds').innerHTML=un}}
+function drawFunds(){if(!FD||!FD.categories.length){$('funds').innerHTML=un;return}
+$('ftabs').innerHTML=FD.categories.map(c=>`<button class="${c.category===fc?'on':''}" data-c="${esc(c.category)}">${esc(c.category)}</button>`).join('');
+const c=FD.categories.find(x=>x.category===fc)||FD.categories[0];
+const rc=v=>v==null?'<td>-</td>':`<td class="${v>=0?'up':'dn'}">${f(v,1)}%</td>`;
+$('funds').innerHTML=`<div class="card"><p class="how" style="margin-top:0"><b>${esc(c.category)}.</b> ${esc(c.risk)}</p><table><tr><th>#  Fund</th><th>1Y</th><th>3Y/yr</th><th>5Y/yr</th><th>NAV</th></tr>`+c.funds.map((x,i)=>`<tr><td><span class="rk">${i+1}</span><span class="sym">${esc(x.name)}</span><span class="sub" style="margin-left:24px;max-width:260px">${esc(x.house)}</span></td>${rc(x.r1)}${rc(x.r3)}${rc(x.r5)}<td>${f(x.nav)}</td></tr>`).join('')+'</table></div>'}
+$('ftabs').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(b){fc=b.dataset.c;drawFunds()}});
+async function loadNews(){try{const d=await j('/api/news');$('news').innerHTML=d.slice(0,25).map(n=>`<a href="${esc(n.link)}" target="_blank" rel="noopener nofollow"><b>${esc(n.title)}</b><br><span>${esc(n.source)} &middot; ${n.ts?ist(n.ts):''}</span></a>`).join('')||'<div class="empty">No news right now.</div>'}catch(e){$('news').innerHTML='<div class="empty">News unavailable right now.</div>'}}
+const KEY='nexora_wl';let wl=[];try{wl=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){}
+if(!wl.length)wl=['RELIANCE.NS','TCS.NS','HDFCBANK.NS','INFY.NS'];
+function save(){try{localStorage.setItem(KEY,JSON.stringify(wl))}catch(e){}}
+async function loadWl(){if(!wl.length){$('wl').innerHTML='<div class="empty">Search above to add stocks.</div>';return}
+try{const d=await j('/api/quote?s='+encodeURIComponent(wl.join(',')));const m={};d.forEach(x=>m[x.symbol]=x);
+$('wl').innerHTML='<table><tr><th>Stock</th><th>Price</th><th>Change</th><th></th></tr>'+wl.map(s=>{const x=m[s],n=s.replace('.NS','').replace('.BO','');
+return x?`<tr><td class="sym">${n}<span class="sub">${esc(x.name)}</span></td><td>${f(x.price)}</td><td>${pill(x.pct)}</td><td><button class="x" onclick="rm('${s}')" title="Remove">✕</button></td></tr>`:`<tr><td class="sym">${n}</td><td colspan="2" style="color:var(--mut)">unavailable</td><td><button class="x" onclick="rm('${s}')">✕</button></td></tr>`}).join('')+'</table>'}catch(e){$('wl').innerHTML=un}}
+window.rm=s=>{wl=wl.filter(x=>x!==s);save();loadWl()};
+let tm;$('q').addEventListener('input',e=>{clearTimeout(tm);const v=e.target.value.trim();if(v.length<2){$('sug').hidden=true;return}
+tm=setTimeout(async()=>{try{const d=await j('/api/search?q='+encodeURIComponent(v));$('sug').innerHTML=d.length?d.map(x=>`<div data-s="${esc(x.symbol)}"><b>${esc(x.symbol.replace('.NS','').replace('.BO',''))}</b> ${esc(x.name)} <span style="color:var(--mut)">${esc(x.exch)}</span></div>`).join(''):'<div>No match</div>';$('sug').hidden=false}catch(e){}},300)});
+$('sug').addEventListener('click',e=>{const d=e.target.closest('[data-s]');if(!d)return;const s=d.dataset.s;if(!wl.includes(s))wl.push(s);save();$('q').value='';$('sug').hidden=true;loadWl()});
+function show(t){document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==='t-'+t));document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('on',a.dataset.t===t));history.replaceState(null,'','#'+t)}
+$('nav').addEventListener('click',e=>{const a=e.target.closest('a');if(a)show(a.dataset.t)});
+const h=location.hash.slice(1);if(h&&$('t-'+h))show(h);
+
+let HOLD=null;try{HOLD=JSON.parse(localStorage.getItem('nx_mom'))}catch(e){}
+let MOM=null;
+function drawMom(){const el=$('mom');if(!MOM||!MOM.list.length){el.innerHTML='<div class="tag">Momentum watchlist pick</div><div class="empty" style="color:#99f6e4">No stock shows strong momentum right now. Try again when the market is open.</div>';return}
+if(!HOLD||!MOM.list.find(x=>x.symbol===HOLD.symbol)&&!HOLD.keep){HOLD={symbol:MOM.list[0].symbol,at:Date.now()};try{localStorage.setItem('nx_mom',JSON.stringify(HOLD))}catch(e){}}
+let x=MOM.list.find(y=>y.symbol===HOLD.symbol)||MOM.list[0];
+const s=sgn(x.pct);
+el.innerHTML=`<div class="tag">Momentum watchlist pick</div><div class="big"><div class="nm">${esc(x.symbol)}<small>${esc(x.name)}</small></div><div class="pr">${f(x.price)}<span class="${s}">${x.pct>=0?'▲ +':'▼ '}${f(x.pct)}%</span></div></div>
+<div style="font-size:12px;color:#99f6e4">Momentum score ${x.score}/100</div><div class="meter"><i style="width:${x.score}%"></i></div>
+<ul>${x.reasons.map(r=>`<li>${esc(r)}</li>`).join('')||'<li>Ranks highest on a mix of volume, gap and closeness to day high</li>'}</ul>
+<button onclick="refreshMom()">Refresh pick</button> <span style="font-size:12px;color:#99f6e4;margin-left:6px">Held since ${new Date(HOLD.at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}. It stays until you tap refresh.</span>
+<div class="fine">A momentum pick is a stock that scores highest on simple rules (volume, opening gap, closeness to today's high). It is a watchlist idea to study, not a buy or sell signal or a prediction. Delayed data. Intraday trading carries high risk.</div>`}
+window.refreshMom=async()=>{HOLD=null;await loadMom()};
+async function loadMom(){try{MOM=await j('/api/momentum');drawMom()}catch(e){$('mom').innerHTML='<div class="tag">Momentum watchlist pick</div>'+un}}
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;$('inst').style.display='inline-block'});
+$('inst').onclick=async()=>{if(dp){dp.prompt();await dp.userChoice;dp=null;$('inst').style.display='none'}};
+setStatus();loadMom();loadIdx();loadMov();loadScr();loadNews();loadWl();loadFunds();
+setInterval(()=>{setStatus();loadMom();loadIdx();loadMov();loadScr();loadWl()},60000);setInterval(loadNews,300000);setInterval(loadFunds,3600000);
+</script></body></html>
