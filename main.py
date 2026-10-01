@@ -219,6 +219,22 @@ def screeners():
       "volatile": top(sorted([x for x in s if x["range"]], key=lambda x: -x["range"])),
     }
 
+def mscore(x):
+    if x.get("pct") is None or x["pct"] <= 0: return None
+    vr = min(x["vratio"] or 0, 4) / 4
+    gap = min(max(x["gap"] or 0, 0), 3) / 3
+    nh = 1 - min(max(-(x["from_high"] or 0), 0), 1.0)
+    pc = min(x["pct"], 4) / 4
+    return round(100 * (0.30 * vr + 0.20 * gap + 0.30 * nh + 0.20 * pc))
+
+def reasons_for(x):
+    r = []
+    if x.get("vratio") and x["vratio"] >= 1.3: r.append("Volume is %.1fx its usual level for this time" % x["vratio"])
+    if x.get("gap") and x["gap"] >= 0.8: r.append("Opened %.1f%% above the previous close" % x["gap"])
+    if x.get("from_high") is not None and x["from_high"] > -0.4: r.append("Trading within 0.4% of today's high")
+    if x.get("pct") and x["pct"] >= 1: r.append("Up %.1f%% on the day" % x["pct"])
+    return r
+
 def momentum():
     out = []
     for x in STATE["stocks"]:
@@ -307,6 +323,291 @@ def news():
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
+
+# ===================== v2 extensions =====================
+import http.cookiejar
+_cj = http.cookiejar.CookieJar()
+_op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(_cj))
+_crumb = {"v": None, "t": 0}
+
+def _ofetch(url, timeout=15):
+    if time.time() < _block_until[0]:
+        raise RateLimited()
+    try:
+        with _op.open(urllib.request.Request(url, headers=UA), timeout=timeout) as r:
+            return r.read()
+    except urllib.error.HTTPError as e:
+        if e.code == 429:
+            _block_until[0] = time.time() + 240
+            raise RateLimited()
+        raise
+
+def ycrumb():
+    if _crumb["v"] and time.time() - _crumb["t"] < 3000:
+        return _crumb["v"]
+    try: _ofetch("https://fc.yahoo.com")
+    except RateLimited: raise
+    except Exception: pass
+    c = _ofetch("https://query1.finance.yahoo.com/v1/test/getcrumb").decode()
+    if "<" in c or " " in c or len(c) > 30: raise RateLimited()
+    _crumb["v"], _crumb["t"] = c, time.time()
+    return c
+
+def yjson(url):
+    c = ycrumb()
+    return json.loads(_ofetch(url + ("&" if "?" in url else "?") + "crumb=" + urllib.parse.quote(c)))
+
+def nse(path, ttl=60):
+    def go():
+        return json.loads(get("https://www.nseindia.com/api/" + path, 20))
+    return cached("nse:" + path, ttl, go)
+
+def num(v):
+    try: return float(str(v).replace(",", ""))
+    except Exception: return None
+
+def r_nse_indices(q):
+    d = nse("allIndices", 60)
+    keep = ["index", "last", "variation", "percentChange", "open", "high", "low", "previousClose", "yearHigh", "yearLow", "pe", "pb", "dy", "advances", "declines", "perChange30d", "perChange365d", "key"]
+    return {"data": [{k: x.get(k) for k in keep} for x in d["data"]], "advances": d.get("advances"), "declines": d.get("declines"), "unchanged": d.get("unchanged"), "ts": d.get("timestamp")}
+
+def r_movers(q):
+    grp = q.get("g", ["NIFTY"])[0]
+    if grp not in ("NIFTY", "BANKNIFTY", "NIFTYNEXT50", "FOSec", "allSec", "SecGtr20"): grp = "NIFTY"
+    g = nse("live-analysis-variations?index=gainers", 60)
+    l = nse("live-analysis-variations?index=loosers", 60)
+    def row(x): return {"symbol": x["symbol"], "price": x["ltp"], "pct": x["perChange"], "change": x["net_price"], "volume": x["trade_quantity"], "value": x["turnover"], "open": x["open_price"], "high": x["high_price"], "low": x["low_price"], "prev": x["prev_price"]}
+    return {"group": grp, "gainers": [row(x) for x in g[grp]["data"][:20]], "losers": [row(x) for x in l[grp]["data"][:20]], "ts": g[grp].get("timestamp")}
+
+def r_52w(q):
+    out = {}
+    for k in ("high", "low"):
+        d = nse("live-analysis-52week?index=" + k, 300)
+        rows = d.get("dataLtpGreater20") or []
+        out[k] = [{"symbol": x["symbol"], "name": x.get("comapnyName"), "ltp": x.get("ltp"), "level": x.get("new52WHL"), "prev": x.get("prev52WHL"), "prevDate": x.get("prevHLDate"), "pct": x.get("pChange") if x.get("pChange") is not None else None} for x in rows[:40]]
+        out["ts"] = d.get("timestamp")
+    return out
+
+def r_active(q):
+    by = q.get("by", ["value"])[0]
+    if by not in ("value", "volume"): by = "value"
+    d = nse("live-analysis-most-active-securities?index=" + by, 120)
+    return {"data": [{"symbol": x["symbol"], "price": x.get("lastPrice"), "pct": x.get("pChange"), "volume": x.get("totalTradedVolume"), "value": x.get("totalTradedValue"), "yearHigh": x.get("yearHigh"), "yearLow": x.get("yearLow")} for x in d["data"][:25]]}
+
+FIIHIST = {}
+def r_fiidii(q):
+    d = nse("fiidiiTradeReact", 600)
+    for x in d:
+        FIIHIST.setdefault(x["date"], {})[x["category"]] = {"buy": num(x["buyValue"]), "sell": num(x["sellValue"]), "net": num(x["netValue"])}
+    return {"latest": d, "history": FIIHIST}
+
+def r_ipo(q):
+    cur = nse("ipo-current-issue", 900)
+    up = nse("upcoming-issues", 900)
+    return {"current": cur, "upcoming": up}
+
+def r_results(q):
+    d = nse("corporate-board-meetings?index=equities", 1800)
+    rows = [x for x in d if "result" in (x.get("bm_purpose") or "").lower()]
+    def key(x):
+        try: return datetime.datetime.strptime(x["bm_date"], "%d-%b-%Y")
+        except Exception: return datetime.datetime(2100, 1, 1)
+    rows.sort(key=key)
+    return {"data": [{"symbol": x["bm_symbol"], "date": x["bm_date"], "purpose": x.get("bm_purpose"), "desc": x.get("bm_desc"), "name": x.get("sm_name") or x.get("bm_symbol")} for x in rows[:120]]}
+
+def r_events(q):
+    ca = nse("corporates-corporateActions?index=equities", 1800)
+    out = [{"symbol": x.get("symbol"), "name": x.get("comp"), "subject": x.get("subject"), "ex": x.get("exDate"), "record": x.get("recDate")} for x in ca[:150]]
+    return {"actions": out}
+
+def r_announce(q):
+    d = nse("corporate-announcements?index=equities", 300)
+    return {"data": [{"symbol": x.get("symbol"), "name": x.get("sm_name"), "desc": x.get("desc"), "text": (x.get("attchmntText") or "")[:240], "time": x.get("an_dt"), "link": x.get("attchmntFile")} for x in d[:40]]}
+
+def r_deals(q):
+    d = nse("block-deal", 600)
+    return {"ts": d.get("timestamp"), "data": [{"symbol": x["symbol"], "price": x.get("lastPrice"), "qty": x.get("totalTradedVolume"), "value": x.get("totalTradedValue"), "session": x.get("session")} for x in d.get("data", [])[:30]]}
+
+def r_fno(q):
+    d = nse("live-analysis-oi-spurts-underlyings", 120)
+    return {"oi": [{"symbol": x["symbol"], "oi": x["latestOI"], "prevOI": x["prevOI"], "chg": x["changeInOI"], "pct": (x["changeInOI"] / x["prevOI"] * 100) if x.get("prevOI") else None, "volume": x["volume"], "price": x["underlyingValue"]} for x in d["data"][:30]]}
+
+def r_options(q):
+    sym = q.get("symbol", ["NIFTY"])[0].upper()
+    if sym not in ("NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY"): sym = "NIFTY"
+    info = nse("option-chain-contract-info?symbol=" + sym, 600)
+    exps = info.get("expiryDates", [])
+    exp = q.get("expiry", [exps[0] if exps else ""])[0]
+    d = nse("option-chain-v3?type=Indices&symbol=%s&expiry=%s" % (sym, urllib.parse.quote(exp)), 90)
+    rec = d.get("records", {})
+    spot = rec.get("underlyingValue")
+    rows = {}
+    for x in rec.get("data", []):
+        k = x.get("strikePrice")
+        e = rows.setdefault(k, {"strike": k})
+        for side in ("CE", "PE"):
+            if x.get(side):
+                o = x[side]; e[side] = {"oi": o.get("openInterest"), "chg": o.get("changeinOpenInterest"), "ltp": o.get("lastPrice"), "iv": o.get("impliedVolatility"), "vol": o.get("totalTradedVolume")}
+    strikes = sorted(rows)
+    ce = sum((rows[k].get("CE") or {}).get("oi") or 0 for k in strikes)
+    pe = sum((rows[k].get("PE") or {}).get("oi") or 0 for k in strikes)
+    def pain(k):
+        t = 0
+        for j in strikes:
+            c = (rows[j].get("CE") or {}).get("oi") or 0
+            p = (rows[j].get("PE") or {}).get("oi") or 0
+            t += c * max(k - j, 0) + p * max(j - k, 0)
+        return t
+    mp = min(strikes, key=pain) if strikes else None
+    atm = min(strikes, key=lambda k: abs(k - spot)) if strikes and spot else None
+    i = strikes.index(atm) if atm in strikes else 0
+    win = strikes[max(0, i - 10): i + 11]
+    res = max(strikes, key=lambda k: (rows[k].get("CE") or {}).get("oi") or 0) if strikes else None
+    sup = max(strikes, key=lambda k: (rows[k].get("PE") or {}).get("oi") or 0) if strikes else None
+    return {"symbol": sym, "expiry": exp, "expiries": exps[:8], "spot": spot, "pcr": (pe / ce) if ce else None, "ceOI": ce, "peOI": pe, "maxPain": mp, "atm": atm, "resistance": res, "support": sup, "rows": [rows[k] for k in win], "ts": rec.get("timestamp")}
+
+def r_chart(q):
+    s = q.get("s", ["^NSEI"])[0]
+    r = q.get("r", ["1d"])[0]
+    cfg = {"1d": ("1d", "5m"), "5d": ("5d", "15m"), "1m": ("1mo", "1d"), "6m": ("6mo", "1d"), "1y": ("1y", "1d"), "5y": ("5y", "1wk"), "max": ("max", "1mo")}
+    rng, iv = cfg.get(r, cfg["1d"])
+    if not re.match(r"^[A-Za-z0-9&\-\.\^=]{1,20}$", s): raise ValueError
+    if not s.startswith("^") and "." not in s and "=" not in s and "-" not in s: s += ".NS"
+    def go():
+        d = json.loads(yget("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s" % (urllib.parse.quote(s), rng, iv)))["chart"]["result"][0]
+        q0 = d["indicators"]["quote"][0]; ts = d.get("timestamp") or []
+        pts = [[t, round(c, 2), v or 0] for t, c, v in zip(ts, q0["close"], q0["volume"]) if c is not None]
+        m = d["meta"]
+        return {"symbol": s, "range": r, "points": pts, "prev": m.get("chartPreviousClose"), "currency": m.get("currency"), "hi52": m.get("fiftyTwoWeekHigh"), "lo52": m.get("fiftyTwoWeekLow")}
+    return cached("ch:%s:%s" % (s, r), 90 if r in ("1d", "5d") else 900, go)
+
+def _raw(d, k):
+    v = (d or {}).get(k)
+    return v.get("raw") if isinstance(v, dict) else v
+
+def ts_series(ysym, types):
+    url = "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/%s?type=%s&merge=false&period1=1400000000&period2=%d" % (ysym, ",".join(types), int(time.time()) + 86400)
+    d = yjson(url)["timeseries"]["result"]
+    out = {}
+    for r in d:
+        t = r["meta"]["type"][0]
+        out[t] = [(x["asOfDate"], x["reportedValue"]["raw"]) for x in r.get(t, []) if x and x.get("reportedValue")]
+    return out
+
+def r_stock(q):
+    sym = q.get("s", ["TCS"])[0].upper()
+    if not re.match(r"^[A-Z0-9&\-\.]{1,20}$", sym): raise ValueError
+    ysym = sym if "." in sym else sym + ".NS"
+    def go():
+        mods = "summaryDetail,defaultKeyStatistics,financialData,assetProfile,recommendationTrend,majorHoldersBreakdown,price"
+        d = yjson("https://query1.finance.yahoo.com/v10/finance/quoteSummary/%s?modules=%s" % (ysym, mods))["quoteSummary"]["result"][0]
+        sd, ks, fd, ap, pr = d.get("summaryDetail", {}), d.get("defaultKeyStatistics", {}), d.get("financialData", {}), d.get("assetProfile", {}), d.get("price", {})
+        mh = d.get("majorHoldersBreakdown", {})
+        rt = (d.get("recommendationTrend", {}).get("trend") or [{}])[0]
+        out = {"symbol": sym, "ysym": ysym, "name": pr.get("longName") or pr.get("shortName"), "exchange": pr.get("exchangeName"), "currency": pr.get("currency"),
+               "price": _raw(pr, "regularMarketPrice"), "change": _raw(pr, "regularMarketChange"), "pct": (_raw(pr, "regularMarketChangePercent") or 0) * 100,
+               "open": _raw(sd, "open"), "prev": _raw(sd, "previousClose"), "dayHigh": _raw(sd, "dayHigh"), "dayLow": _raw(sd, "dayLow"),
+               "hi52": _raw(sd, "fiftyTwoWeekHigh"), "lo52": _raw(sd, "fiftyTwoWeekLow"), "volume": _raw(sd, "volume"), "avgVolume": _raw(sd, "averageVolume"),
+               "marketCap": _raw(sd, "marketCap"), "pe": _raw(sd, "trailingPE"), "fpe": _raw(sd, "forwardPE"), "pb": _raw(ks, "priceToBook"), "bookValue": _raw(ks, "bookValue"),
+               "divYield": (_raw(sd, "dividendYield") or 0), "divRate": _raw(sd, "dividendRate"), "beta": _raw(sd, "beta"), "eps": _raw(ks, "trailingEps"),
+               "roe": _raw(fd, "returnOnEquity"), "roa": _raw(fd, "returnOnAssets"), "de": _raw(fd, "debtToEquity"), "currentRatio": _raw(fd, "currentRatio"),
+               "grossMargin": _raw(fd, "grossMargins"), "opMargin": _raw(fd, "operatingMargins"), "netMargin": _raw(fd, "profitMargins"),
+               "revGrowth": _raw(fd, "revenueGrowth"), "earnGrowth": _raw(fd, "earningsGrowth"), "revenue": _raw(fd, "totalRevenue"), "ebitda": _raw(fd, "ebitda"),
+               "debt": _raw(fd, "totalDebt"), "cash": _raw(fd, "totalCash"), "fcf": _raw(fd, "freeCashflow"), "ev": _raw(ks, "enterpriseValue"),
+               "targetMean": _raw(fd, "targetMeanPrice"), "targetHigh": _raw(fd, "targetHighPrice"), "targetLow": _raw(fd, "targetLowPrice"), "reco": fd.get("recommendationKey"), "analysts": _raw(fd, "numberOfAnalystOpinions"),
+               "insiders": _raw(mh, "insidersPercentHeld"), "institutions": _raw(mh, "institutionsPercentHeld"),
+               "sector": ap.get("sector"), "industry": ap.get("industry"), "about": ap.get("longBusinessSummary"), "website": ap.get("website"), "employees": ap.get("fullTimeEmployees"), "city": ap.get("city"),
+               "trend": {"strongBuy": rt.get("strongBuy"), "buy": rt.get("buy"), "hold": rt.get("hold"), "sell": rt.get("sell"), "strongSell": rt.get("strongSell")}}
+        return out
+    out = cached("stock:" + ysym, 120, go)
+    return out
+
+def r_fin(q):
+    sym = q.get("s", ["TCS"])[0].upper()
+    if not re.match(r"^[A-Z0-9&\-\.]{1,20}$", sym): raise ValueError
+    ysym = sym if "." in sym else sym + ".NS"
+    def go():
+        ann = ts_series(ysym, ["annualTotalRevenue", "annualNetIncome", "annualEBITDA", "annualBasicEPS", "annualTotalAssets", "annualTotalDebt", "annualStockholdersEquity", "annualOperatingCashFlow", "annualFreeCashFlow"])
+        qtr = ts_series(ysym, ["quarterlyTotalRevenue", "quarterlyNetIncome", "quarterlyBasicEPS", "quarterlyEBITDA"])
+        return {"annual": ann, "quarterly": qtr}
+    return cached("fin:" + ysym, 3600, go)
+
+def r_peers(q):
+    sym = q.get("s", ["TCS"])[0].upper()
+    ysym = sym if "." in sym else sym + ".NS"
+    def go():
+        d = json.loads(_ofetch("https://query1.finance.yahoo.com/v6/finance/recommendationsbysymbol/" + urllib.parse.quote(ysym)))
+        syms = [x["symbol"] for x in d["finance"]["result"][0]["recommendedSymbols"] if x["symbol"].endswith((".NS", ".BO"))][:6]
+        out = []
+        for s in syms:
+            try:
+                c = chart(s); c["symbol"] = s.replace(".NS", ""); out.append(c)
+            except Exception: pass
+        return out
+    return {"peers": cached("peers:" + ysym, 900, go)}
+
+def r_stocknews(q):
+    name = q.get("n", [""])[0][:60] or q.get("s", [""])[0]
+    url = "https://news.google.com/rss/search?q=%s&hl=en-IN&gl=IN&ceid=IN:en" % urllib.parse.quote(name + " share stock when:30d")
+    def go():
+        root = ET.fromstring(get(url)); out = []
+        for it in root.iter("item"):
+            t = (it.findtext("title") or "").strip(); m = re.match(r"^(.*) - ([^-]+)$", t)
+            try: ts = parsedate_to_datetime(it.findtext("pubDate")).timestamp()
+            except Exception: ts = 0
+            out.append({"title": m.group(1) if m else t, "source": m.group(2) if m else "News", "link": it.findtext("link"), "ts": ts})
+        return out[:12]
+    return {"data": cached("sn:" + name, 600, go)}
+
+WSTOCKS = {"US": ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA", "JPM"], "UK": ["SHEL.L", "AZN.L", "HSBA.L", "ULVR.L", "BP.L", "GSK.L", "RIO.L", "BATS.L"],
+           "Germany": ["SAP.DE", "SIE.DE", "ALV.DE", "DTE.DE", "AIR.DE", "MBG.DE", "BMW.DE", "BAS.DE"], "Japan": ["7203.T", "6758.T", "9984.T", "8306.T", "6861.T", "7974.T", "9983.T", "8035.T"],
+           "Hong Kong": ["0700.HK", "9988.HK", "1299.HK", "0941.HK", "3690.HK", "1810.HK", "0005.HK", "0388.HK"], "China": ["600519.SS", "601318.SS", "600036.SS", "601398.SS", "000858.SZ", "300750.SZ", "002594.SZ", "601857.SS"]}
+STATE["wstocks"] = {}; STATE["wt"] = 0; STATE["cm"] = []; STATE["cmt"] = 0
+
+def refresh_world_picks():
+    out = {}
+    for mk, syms in WSTOCKS.items():
+        res = fetch_many([(s, s) for s in syms], 3, intraday)
+        out[mk] = res
+    STATE["wstocks"] = out
+    cm = fetch_many([(s, n) for s, n in COMMOD], 3, intraday)
+    STATE["cm"] = cm
+    STATE["wt"] = time.time()
+
+def scored(lst, k=8):
+    out = []
+    for x in lst:
+        sc = mscore(x)
+        y = dict(x); y["score"] = sc if sc is not None else 0; y["reasons"] = reasons_for(x); out.append(y)
+    out.sort(key=lambda z: -z["score"])
+    return out[:k]
+
+def r_picks(q):
+    res = {"India": scored(STATE["stocks"], 10)}
+    for mk, lst in STATE["wstocks"].items():
+        res[mk] = scored(lst, 6)
+    com = []
+    for x in STATE["cm"]:
+        sc = mscore(x); y = dict(x)
+        pct = x.get("pct") or 0
+        y["score"] = sc if sc is not None else 0
+        y["state"] = "Strong upward momentum" if y["score"] >= 55 else "Mild upward momentum" if y["score"] >= 30 else "Weak or sideways" if pct > -0.5 else "Downward pressure" if pct > -1.5 else "Strong downward pressure"
+        y["reasons"] = reasons_for(x); com.append(y)
+    return {"markets": res, "commodities": com, "asof": STATE["wt"]}
+
+ROUTES = {"/api/nse/indices": r_nse_indices, "/api/movers2": r_movers, "/api/52w": r_52w, "/api/active": r_active, "/api/fiidii": r_fiidii, "/api/ipo": r_ipo,
+          "/api/results": r_results, "/api/events": r_events, "/api/announce": r_announce, "/api/deals": r_deals, "/api/fno": r_fno, "/api/options": r_options,
+          "/api/chart": r_chart, "/api/stock": r_stock, "/api/fin": r_fin, "/api/peers": r_peers, "/api/stocknews": r_stocknews, "/api/picks": r_picks}
+
+def _world_loop():
+    while True:
+        try:
+            if time.time() - STATE["wt"] > 900 and time.time() > _block_until[0]:
+                refresh_world_picks()
+        except Exception as e:
+            STATE["err"] = repr(e)
+        time.sleep(30)
+
 ICON192 = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAE4UlEQVR4nO3dS07cQBRG4UuUWbKHRAyDxBqYsxTWw1KY9xqQeoqyiCwgg5ZKlo2N7b8e91adbxShjttSHcrlB913P379MeCsb613ALERECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJN9b7wAyuH97nf3k4/mlzlvf8V0ZoS3TmaqQEQFFtZ3OVNGMWAOFtL+eoy8+ioDiORFEuYYICBICCub0XFJoEiIgSAgoEnEWKTEJERAkBAQJAUFCQJAQUBhFLyifRkAxZKmnxE0xAgrA59xzQ0De5aqn0D15AoKEgFxzPv0YAXnmvx7jmWi33J52zRCQR3o91R6qJyB3TtdTLZop1kC+xKrHCMiVcPUYAXWgYT1GQH6cm37a1mME5ITnu13bCKi9iEufhIAaC12PEVBb0esxAmqog3qMgMJxVY8RUCtBT9qXCKiBuCftSwRUWx9Ln4SAquqsHiOgmvqrxwiomi7rMQJyznk9RkB1dHPSvkRAxfV00r5EQGX1uvRJCKig7usxAipnhHqMgAoZpB4joBLGqccIyI+I9RgBZdfxJZ9PEVBOfV/y+VQ/fxv/7+81/fvxeqn/Oz3U0ifp4QvnpulM1cxozHqsg0PYWj1m9v7wVOeYMmw9Fn0G2qgnebxerORQjVyPhZ6B/Hzt4wl91GNxA7p/e31/eNrzyvSyEg2NdtK+FDIg5Vv7MmbkbVZrIl5A+rBlGfjBlz5JsIBy/dK3+uq/zuqxWGdhy2Hbswy6nYWtOTGi1DMVZgYqtOA4ulnqmYkR0Nqwbc8ue16wsfGMeq3HQhzCvhzgtQPZnnqmvhxmTtqXvAe0f8ymGR1NJ9kYbA5en3IdUKsLLcshp541ftdADS/Tzd6aejY4Daj5mKUdaL4nznk8hGUZs7b3GQapxxzOQLl+4xsO4Tj1mLcZKPvxQpmHzp3WDVWPuQqo3Grj6JZPX1garR7zcwgrulY9NK4b99d2PoE0FBczULUzndMXtafW5qEBpx/zMAPVPE8uN8Zj1mPNA6p/lWXjPx59RlbfmQ60DKjVNbqP55eMQz5yPdYwoOZXeLNsZ/B6rFVAzevJsjXqsSYBOaknbTNtdufVwtPPinSpdkCu6lE2zvRzUzUgn/VM32LnM7LUk9QLyHM96Y0+nl82Gvr5+6Hm/oRQKSD/9Uzf8fF6ubWSpJ9Qz0yNWxmB6sFRxT+hbPYJLDwX0ZmCM9DGh/fwXEQ3Sq2Btj/6afuuE/UEUiSgPR8cttYQ9cTS/nGOKeoJJ39Ae6afm9kkRD0ReZmBqCcoFwFRT1ztA6Ke0BoHRD3R5Q9odhcpyyvhVvtDGEIrEtCeqYXppw+lZqDtPqinG8Uf55hdVySdzrj402bExSIaEgKChIAgISBICAgSAoKEgCAhIEgICBICgoSAICEgSAgIEgKChIAgISBICAgSAoKEgCAhIEgICBICgoSAICEgSAgIEgKChIAgISBICAgSAoKEgCAhIEgICBICgoSAICEgSAgIEgKChIAgISBICAgSAoKEgCAhIEgICBICgoSAICEgSAgIkv++46Dz9bQy7AAAAABJRU5ErkJggg==")
 ICON512 = base64.b64decode("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")
 MANIFEST = '{"name":"Nexora Markets","short_name":"Nexora","description":"Free market dashboard for India and the world","start_url":"/?src=pwa","scope":"/","display":"standalone","orientation":"portrait","background_color":"#0b1f2a","theme_color":"#0b1f2a","icons":[{"src":"/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},{"src":"/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}\n'
@@ -347,6 +648,8 @@ class H(BaseHTTPRequestHandler):
                 with ThreadPoolExecutor(8) as ex:
                     r = list(ex.map(lambda s: (lambda x: x)(_try(quote, s)), syms))
                 return self.send(200, json.dumps([x for x in r if x]))
+            if p in ROUTES:
+                return self.send(200, json.dumps(ROUTES[p](q)))
             if p == "/api/status":
                 return self.send(200, json.dumps({"ok": True, "now": time.time()}))
             return self.send(404, "not found", "text/plain")
@@ -360,4 +663,5 @@ def _try(f, *a):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8000"))
     threading.Thread(target=refresher, daemon=True).start()
+    threading.Thread(target=_world_loop, daemon=True).start()
     ThreadingHTTPServer(("0.0.0.0", port), H).serve_forever()
