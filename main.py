@@ -66,7 +66,7 @@ def yget(url):
         return get(url)
     except urllib.error.HTTPError as e:
         if e.code == 429:
-            _block_until[0] = time.time() + 240
+            _block_until[0] = time.time() + 600
             raise RateLimited()
         raise
 
@@ -150,13 +150,13 @@ def refresher():
     while True:
         now = time.time()
         try:
-            if now - last["idx"] > 120:
+            if now - last["idx"] > (120 if market_hours() else 600):
                 last["idx"] = now
                 for key, lst in (("idx", INDICES), ("world", WORLD), ("commod", COMMOD)):
                     r = fetch_many(lst)
                     if r: STATE[key] = r
                 if STATE["idx"]: STATE["idx_t"] = now
-            stk_every = 180 if market_hours() else 1800
+            stk_every = 300 if market_hours() else 3600
             if now - last["stk"] > stk_every:
                 last["stk"] = now
                 r = fetch_many([(s + ".NS", s) for s in N50], 3, intraday)
@@ -342,7 +342,7 @@ def _ofetch(url, timeout=15):
             return r.read()
     except urllib.error.HTTPError as e:
         if e.code == 429:
-            _block_until[0] = time.time() + 240
+            _block_until[0] = time.time() + 600
             raise RateLimited()
         raise
 
@@ -655,7 +655,7 @@ class H(BaseHTTPRequestHandler):
             if p in ROUTES:
                 return self.send(200, json.dumps(ROUTES[p](q)))
             if p == "/api/status":
-                return self.send(200, json.dumps({"ok": True, "now": time.time()}))
+                return self.send(200, json.dumps({"ok": True, "now": time.time(), "err": STATE.get("err"), "yblocked": time.time() < _block_until[0]}))
             return self.send(404, "not found", "text/plain")
         except Exception as e:
             return self.send(502, json.dumps({"error": "upstream unavailable"}))
