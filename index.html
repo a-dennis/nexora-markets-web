@@ -168,7 +168,7 @@ $('mk').insertAdjacentHTML('afterend',`<p class="sm" style="margin-top:8px">PE =
 function chartHTML(id){return `<div class="tabs" id="${id}-t"></div><svg class="chart" id="${id}"></svg><div class="tt" id="${id}-tt"></div>`}
 async function drawChart(id,sym,ranges,def){let cur=def||ranges[0];const tabs=$(id+'-t');
 const load=async r=>{cur=r;tabs.innerHTML=ranges.map(x=>`<button class="${x===cur?'on':''}" data-r="${x}">${x.toUpperCase()}</button>`).join('');
-try{const d=await j(`/api/chart?s=${encodeURIComponent(sym)}&r=${r}`);plot(id,d.points,d.prev,r)}catch(e){$(id).innerHTML='';$(id+'-tt').textContent='Chart unavailable right now.'}};
+try{const d=await j(`/api/chart?s=${encodeURIComponent(sym)}&r=${r}`);plot(id,d.points,d.prev,r)}catch(e){$(id).innerHTML='';$(id+'-tt').textContent='Line chart is resting for a moment. Use the interactive chart below.'}};
 tabs.onclick=e=>{const b=e.target.closest('[data-r]');if(b)load(b.dataset.r)};await load(cur)}
 function plot(id,pts,prev,r){const svg=$(id);if(!pts||pts.length<2){svg.innerHTML='';return}const W=900,H=280,P={l:8,r:58,t:10,b:22};const ys=pts.map(p=>p[1]);let mn=Math.min(...ys),mx=Math.max(...ys);const pad=(mx-mn)*.08||1;mn-=pad;mx+=pad;
 const X=i=>P.l+i/(pts.length-1)*(W-P.l-P.r),Y=v=>P.t+(1-(v-mn)/(mx-mn))*(H-P.t-P.b);
