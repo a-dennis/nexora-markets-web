@@ -658,7 +658,7 @@ class H(BaseHTTPRequestHandler):
                 return self.send(200, json.dumps({"ok": True, "now": time.time(), "err": STATE.get("err"), "yblocked": time.time() < _block_until[0]}))
             return self.send(404, "not found", "text/plain")
         except Exception as e:
-            return self.send(502, json.dumps({"error": "upstream unavailable"}))
+            return self.send(502, json.dumps({"error": "upstream unavailable", "why": repr(e)[:160]}))
 
 def _try(f, *a):
     try: return f(*a)
