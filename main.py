@@ -723,10 +723,16 @@ class H(BaseHTTPRequestHandler):
                 return self.send(200, json.dumps(ROUTES[p](q)))
             if p == "/api/dbg":
                 out = {}
-                for k, u in (("idx50", "equity-stockIndices?index=NIFTY%2050"), ("idx500", "equity-stockIndices?index=NIFTY%20500"), ("q", "quote-equity?symbol=TCS"), ("cg", "chart-databyindex?index=TCSEQN"), ("hist", "historical/cm/equity?symbol=TCS&series=%5B%22EQ%22%5D&from=01-09-2026&to=02-10-2026")):
-                    for mode, fn in (("plain", lambda x: get(x, 15)), ("cookie", nget)):
-                        try: out[k + ":" + mode] = fn("https://www.nseindia.com/api/" + u)[:150].decode("utf8", "replace")
-                        except Exception as e: out[k + ":" + mode] = repr(e)[:100]
+                now = int(time.time())
+                for k, u in (("q1", "https://query1.finance.yahoo.com/v8/finance/chart/TCS.NS?range=1d&interval=5m"),
+                             ("q1b", "https://query1.finance.yahoo.com/v8/finance/chart/TCS.NS?interval=5m&period1=%d&period2=%d" % (now - 86400 * 3, now)),
+                             ("q2p", "https://query2.finance.yahoo.com/v8/finance/chart/TCS.NS?interval=1d&period1=%d&period2=%d" % (now - 86400 * 30, now)),
+                             ("spark", "https://query1.finance.yahoo.com/v8/finance/spark?symbols=TCS.NS&range=1d&interval=5m"),
+                             ("v7", "https://query1.finance.yahoo.com/v7/finance/quote?symbols=TCS.NS"),
+                             ("stooq", "https://stooq.com/q/l/?s=tcs.in&f=sd2t2ohlcv&h&e=csv"),
+                             ("gf", "https://www.google.com/finance/quote/TCS:NSE")):
+                    try: out[k] = get(u, 15)[:200].decode("utf8", "replace")
+                    except Exception as e: out[k] = repr(e)[:100]
                 return self.send(200, json.dumps(out))
             if p == "/api/status":
                 return self.send(200, json.dumps({"ok": True, "now": time.time(), "err": STATE.get("err"), "yblocked": time.time() < _block_until[0]}))
