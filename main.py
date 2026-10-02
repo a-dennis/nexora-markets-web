@@ -584,14 +584,24 @@ def r_stock(q):
     return cached("stock:" + ysym, 120, go2)
 
 def nse_stock(sym):
-    d = nse("equity-stockIndices?index=" + urllib.parse.quote("NIFTY 500"), 120)
-    for x in d["data"]:
-        if x.get("symbol") == sym:
-            m = x.get("meta") or {}
-            return {"symbol": sym, "ysym": sym + ".NS", "name": m.get("companyName") or sym, "exchange": "NSE", "currency": "INR", "price": x.get("lastPrice"), "change": x.get("change"), "pct": x.get("pChange"),
-                    "open": x.get("open"), "prev": x.get("previousClose"), "dayHigh": x.get("dayHigh"), "dayLow": x.get("dayLow"), "hi52": x.get("yearHigh"), "lo52": x.get("yearLow"),
-                    "volume": x.get("totalTradedVolume"), "industry": m.get("industry"), "partial": True, "source": "NSE"}
-    raise RuntimeError("symbol not in NSE list")
+    raw = get("https://query2.finance.yahoo.com/v8/finance/chart/%s.NS?range=1d&interval=5m" % urllib.parse.quote(sym), 15)
+    m = json.loads(raw)["chart"]["result"][0]["meta"]
+    px, pv = m.get("regularMarketPrice"), m.get("previousClose") or m.get("chartPreviousClose")
+    if px is None: raise RuntimeError("no meta price")
+    out = {"symbol": sym, "ysym": sym + ".NS", "name": m.get("longName") or m.get("shortName") or sym, "exchange": "NSE", "currency": "INR", "price": px,
+           "change": round(px - pv, 2) if pv else None, "pct": round((px - pv) / pv * 100, 2) if pv else None, "prev": pv,
+           "dayHigh": m.get("regularMarketDayHigh"), "dayLow": m.get("regularMarketDayLow"), "hi52": m.get("fiftyTwoWeekHigh"), "lo52": m.get("fiftyTwoWeekLow"),
+           "volume": m.get("regularMarketVolume"), "partial": True, "source": "Yahoo summary"}
+    try:
+        h = get("https://www.google.com/finance/quote/%s:NSE" % urllib.parse.quote(sym), 15).decode("utf8", "replace")
+        kv = dict(re.findall(r'class="SwQK7">([^<]*)</div><div class="dO6ijd">([^<]*)</div>', h))
+        pe = num(kv.get("P/E ratio"))
+        if pe: out["pe"] = pe
+        o = num((kv.get("Open") or "").replace("\u20b9", "")); e = num((kv.get("EPS") or "").replace("\u20b9", ""))
+        if o: out["open"] = o
+        if e: out["eps"] = e
+    except Exception: pass
+    return out
 
 def r_fin(q):
     sym = q.get("s", ["TCS"])[0].upper()
@@ -721,19 +731,6 @@ class H(BaseHTTPRequestHandler):
                 return self.send(200, json.dumps([x for x in r if x]))
             if p in ROUTES:
                 return self.send(200, json.dumps(ROUTES[p](q)))
-            if p == "/api/dbg":
-                out = {}
-                now = int(time.time())
-                for k, u in (("q1", "https://query1.finance.yahoo.com/v8/finance/chart/TCS.NS?range=1d&interval=5m"),
-                             ("q1b", "https://query1.finance.yahoo.com/v8/finance/chart/TCS.NS?interval=5m&period1=%d&period2=%d" % (now - 86400 * 3, now)),
-                             ("q2p", "https://query2.finance.yahoo.com/v8/finance/chart/TCS.NS?interval=1d&period1=%d&period2=%d" % (now - 86400 * 30, now)),
-                             ("spark", "https://query1.finance.yahoo.com/v8/finance/spark?symbols=TCS.NS&range=1d&interval=5m"),
-                             ("v7", "https://query1.finance.yahoo.com/v7/finance/quote?symbols=TCS.NS"),
-                             ("stooq", "https://stooq.com/q/l/?s=tcs.in&f=sd2t2ohlcv&h&e=csv"),
-                             ("gf", "https://www.google.com/finance/quote/TCS:NSE")):
-                    try: out[k] = get(u, 15)[:200].decode("utf8", "replace")
-                    except Exception as e: out[k] = repr(e)[:100]
-                return self.send(200, json.dumps(out))
             if p == "/api/status":
                 return self.send(200, json.dumps({"ok": True, "now": time.time(), "err": STATE.get("err"), "yblocked": time.time() < _block_until[0]}))
             return self.send(404, "not found", "text/plain")
