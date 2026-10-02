@@ -105,12 +105,16 @@ def intraday(sym):
             "time": m.get("regularMarketTime"), "day": keys[-1], "spark": [round(x[3], 2) for x in today][-30:]}
 
 def chart(sym, rng="1d", interval="5m"):
-    d = json.loads(yget("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s" % (urllib.parse.quote(sym), rng, interval)))["chart"]["result"][0]
-    m = d["meta"]
-    closes = (d["indicators"]["quote"][0].get("close") or [])
-    pts = [round(c, 2) for c in closes if c is not None]
+    d = json.loads(yget("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=5d&interval=15m" % urllib.parse.quote(sym)))["chart"]["result"][0]
+    m = d["meta"]; off = m.get("gmtoffset", 0)
+    days = {}
+    for t, c in zip(d.get("timestamp") or [], d["indicators"]["quote"][0].get("close") or []):
+        if c is None: continue
+        days.setdefault(datetime.datetime.utcfromtimestamp(t + off).date().isoformat(), []).append(round(c, 2))
+    keys = sorted(days)
     price = m.get("regularMarketPrice")
-    prev = m.get("chartPreviousClose") or m.get("previousClose")
+    prev = days[keys[-2]][-1] if len(keys) > 1 else (m.get("chartPreviousClose") or m.get("previousClose"))
+    pts = days[keys[-1]] if keys else []
     chg = (price - prev) if (price is not None and prev) else None
     return {"symbol": sym, "price": price, "prev": prev, "change": chg,
             "pct": (chg / prev * 100) if chg is not None and prev else None,
