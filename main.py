@@ -478,6 +478,16 @@ def r_chart(q):
     if not re.match(r"^[A-Za-z0-9&\-\.\^=]{1,20}$", s): raise ValueError
     if not s.startswith("^") and "." not in s and "=" not in s and "-" not in s: s += ".NS"
     def go():
+        try:
+            return _ychart(s, r, rng, iv)
+        except Exception as ye:
+            if s.startswith("^") or not s.endswith(".NS"): raise
+            try: return nse_chart(s[:-3], r)
+            except Exception as ne: raise RuntimeError("yahoo %r; nse %r" % (ye, ne))
+    return cached("ch:%s:%s" % (s, r), 90 if r in ("1d", "5d") else 900, go)
+
+def _ychart(s, r, rng, iv):
+    if True:
         raw = yget("https://query2.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s" % (urllib.parse.quote(s), rng, iv))
         try:
             d = json.loads(raw)["chart"]["result"][0]
@@ -488,7 +498,32 @@ def r_chart(q):
         pts = [[t, round(c, 2), v or 0] for t, c, v in zip(ts, q0["close"], q0["volume"]) if c is not None]
         m = d["meta"]
         return {"symbol": s, "range": r, "points": pts, "prev": m.get("chartPreviousClose"), "currency": m.get("currency"), "hi52": m.get("fiftyTwoWeekHigh"), "lo52": m.get("fiftyTwoWeekLow")}
-    return cached("ch:%s:%s" % (s, r), 90 if r in ("1d", "5d") else 900, go)
+
+def nse_chart(sym, r):
+    import datetime
+    if r == "1d":
+        d = json.loads(get("https://www.nseindia.com/api/chart-databyindex?index=%sEQN" % urllib.parse.quote(sym), 20))
+        pts = [[int(t / 1000) - 19800, p, 0] for t, p in d.get("grapthData", []) if p]
+        if not pts: raise RuntimeError("nse empty 1d")
+        return {"symbol": sym + ".NS", "range": r, "points": pts, "prev": d.get("closePrice") or None, "currency": "INR", "source": "NSE"}
+    days = {"5d": 9, "1m": 31, "6m": 183, "1y": 366, "5y": 1826, "max": 1826}.get(r, 31)
+    end = datetime.date.today(); out = []
+    cur_end = end
+    left = days
+    while left > 0:
+        span = min(left, 360); st = cur_end - datetime.timedelta(days=span)
+        u = "https://www.nseindia.com/api/historical/cm/equity?symbol=%s&series=%%5B%%22EQ%%22%%5D&from=%s&to=%s" % (urllib.parse.quote(sym), st.strftime("%d-%m-%Y"), cur_end.strftime("%d-%m-%Y"))
+        out = json.loads(get(u, 20)).get("data", []) + out
+        cur_end = st - datetime.timedelta(days=1); left -= span + 1
+    pts = []
+    for x in out:
+        try: t = int(datetime.datetime.strptime(x["CH_TIMESTAMP"], "%Y-%m-%d").replace(tzinfo=datetime.timezone.utc).timestamp()) + 36000
+        except Exception: continue
+        if x.get("CH_CLOSING_PRICE"): pts.append([t, x["CH_CLOSING_PRICE"], x.get("CH_TOT_TRADED_QTY") or 0])
+    pts.sort()
+    if r == "5d": pts = pts[-5:]
+    if not pts: raise RuntimeError("nse empty hist")
+    return {"symbol": sym + ".NS", "range": r, "points": pts, "prev": None, "currency": "INR", "source": "NSE"}
 
 def _raw(d, k):
     v = (d or {}).get(k)
@@ -528,8 +563,22 @@ def r_stock(q):
                "sector": ap.get("sector"), "industry": ap.get("industry"), "about": ap.get("longBusinessSummary"), "website": ap.get("website"), "employees": ap.get("fullTimeEmployees"), "city": ap.get("city"),
                "trend": {"strongBuy": rt.get("strongBuy"), "buy": rt.get("buy"), "hold": rt.get("hold"), "sell": rt.get("sell"), "strongSell": rt.get("strongSell")}}
         return out
-    out = cached("stock:" + ysym, 120, go)
-    return out
+    def go2():
+        try: return go()
+        except Exception as ye:
+            try: return nse_stock(sym)
+            except Exception as ne: raise RuntimeError("yahoo %r; nse %r" % (ye, ne))
+    return cached("stock:" + ysym, 120, go2)
+
+def nse_stock(sym):
+    d = nse("equity-stockIndices?index=" + urllib.parse.quote("NIFTY 500"), 120)
+    for x in d["data"]:
+        if x.get("symbol") == sym:
+            m = x.get("meta") or {}
+            return {"symbol": sym, "ysym": sym + ".NS", "name": m.get("companyName") or sym, "exchange": "NSE", "currency": "INR", "price": x.get("lastPrice"), "change": x.get("change"), "pct": x.get("pChange"),
+                    "open": x.get("open"), "prev": x.get("previousClose"), "dayHigh": x.get("dayHigh"), "dayLow": x.get("dayLow"), "hi52": x.get("yearHigh"), "lo52": x.get("yearLow"),
+                    "volume": x.get("totalTradedVolume"), "industry": m.get("industry"), "partial": True, "source": "NSE"}
+    raise RuntimeError("symbol not in NSE list")
 
 def r_fin(q):
     sym = q.get("s", ["TCS"])[0].upper()
