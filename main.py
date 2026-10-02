@@ -478,8 +478,13 @@ def r_chart(q):
     if not re.match(r"^[A-Za-z0-9&\-\.\^=]{1,20}$", s): raise ValueError
     if not s.startswith("^") and "." not in s and "=" not in s and "-" not in s: s += ".NS"
     def go():
-        d = json.loads(yget("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s" % (urllib.parse.quote(s), rng, iv)))["chart"]["result"][0]
-        q0 = d["indicators"]["quote"][0]; ts = d.get("timestamp") or []
+        raw = yget("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s" % (urllib.parse.quote(s), rng, iv))
+        try:
+            d = json.loads(raw)["chart"]["result"][0]
+            q0 = d["indicators"]["quote"][0]; ts = d.get("timestamp") or []
+            q0["close"]
+        except Exception as e:
+            raise RuntimeError("%s :: %.140s" % (repr(e), raw))
         pts = [[t, round(c, 2), v or 0] for t, c, v in zip(ts, q0["close"], q0["volume"]) if c is not None]
         m = d["meta"]
         return {"symbol": s, "range": r, "points": pts, "prev": m.get("chartPreviousClose"), "currency": m.get("currency"), "hi52": m.get("fiftyTwoWeekHigh"), "lo52": m.get("fiftyTwoWeekLow")}
