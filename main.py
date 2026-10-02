@@ -40,7 +40,7 @@ def get(url, timeout=12):
         return r.read()
 
 def chart(sym, rng="1d", interval="5m"):
-    url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s" % (urllib.parse.quote(sym), rng, interval)
+    url = "https://query2.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s" % (urllib.parse.quote(sym), rng, interval)
     d = json.loads(get(url))["chart"]["result"][0]
     m = d["meta"]
     closes = (d["indicators"]["quote"][0].get("close") or [])
@@ -71,7 +71,7 @@ def yget(url):
         raise
 
 def chart_full(sym, rng="5d", interval="15m"):
-    url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s" % (urllib.parse.quote(sym), rng, interval)
+    url = "https://query2.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s" % (urllib.parse.quote(sym), rng, interval)
     d = json.loads(yget(url))["chart"]["result"][0]
     return d
 
@@ -105,7 +105,7 @@ def intraday(sym):
             "time": m.get("regularMarketTime"), "day": keys[-1], "spark": [round(x[3], 2) for x in today][-30:]}
 
 def chart(sym, rng="1d", interval="5m"):
-    d = json.loads(yget("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=5d&interval=15m" % urllib.parse.quote(sym)))["chart"]["result"][0]
+    d = json.loads(yget("https://query2.finance.yahoo.com/v8/finance/chart/%s?range=5d&interval=15m" % urllib.parse.quote(sym)))["chart"]["result"][0]
     m = d["meta"]; off = m.get("gmtoffset", 0)
     days = {}
     for t, c in zip(d.get("timestamp") or [], d["indicators"]["quote"][0].get("close") or []):
@@ -352,7 +352,7 @@ def ycrumb():
     try: _ofetch("https://fc.yahoo.com")
     except RateLimited: raise
     except Exception: pass
-    c = _ofetch("https://query1.finance.yahoo.com/v1/test/getcrumb").decode()
+    c = _ofetch("https://query2.finance.yahoo.com/v1/test/getcrumb").decode()
     if "<" in c or " " in c or len(c) > 30: raise RateLimited()
     _crumb["v"], _crumb["t"] = c, time.time()
     return c
@@ -478,7 +478,7 @@ def r_chart(q):
     if not re.match(r"^[A-Za-z0-9&\-\.\^=]{1,20}$", s): raise ValueError
     if not s.startswith("^") and "." not in s and "=" not in s and "-" not in s: s += ".NS"
     def go():
-        raw = yget("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s" % (urllib.parse.quote(s), rng, iv))
+        raw = yget("https://query2.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s" % (urllib.parse.quote(s), rng, iv))
         try:
             d = json.loads(raw)["chart"]["result"][0]
             q0 = d["indicators"]["quote"][0]; ts = d.get("timestamp") or []
@@ -495,7 +495,7 @@ def _raw(d, k):
     return v.get("raw") if isinstance(v, dict) else v
 
 def ts_series(ysym, types):
-    url = "https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/%s?type=%s&merge=false&period1=1400000000&period2=%d" % (ysym, ",".join(types), int(time.time()) + 86400)
+    url = "https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/%s?type=%s&merge=false&period1=1400000000&period2=%d" % (ysym, ",".join(types), int(time.time()) + 86400)
     d = yjson(url)["timeseries"]["result"]
     out = {}
     for r in d:
@@ -509,7 +509,7 @@ def r_stock(q):
     ysym = sym if "." in sym else sym + ".NS"
     def go():
         mods = "summaryDetail,defaultKeyStatistics,financialData,assetProfile,recommendationTrend,majorHoldersBreakdown,price"
-        d = yjson("https://query1.finance.yahoo.com/v10/finance/quoteSummary/%s?modules=%s" % (ysym, mods))["quoteSummary"]["result"][0]
+        d = yjson("https://query2.finance.yahoo.com/v10/finance/quoteSummary/%s?modules=%s" % (ysym, mods))["quoteSummary"]["result"][0]
         sd, ks, fd, ap, pr = d.get("summaryDetail", {}), d.get("defaultKeyStatistics", {}), d.get("financialData", {}), d.get("assetProfile", {}), d.get("price", {})
         mh = d.get("majorHoldersBreakdown", {})
         rt = (d.get("recommendationTrend", {}).get("trend") or [{}])[0]
@@ -545,7 +545,7 @@ def r_peers(q):
     sym = q.get("s", ["TCS"])[0].upper()
     ysym = sym if "." in sym else sym + ".NS"
     def go():
-        d = json.loads(_ofetch("https://query1.finance.yahoo.com/v6/finance/recommendationsbysymbol/" + urllib.parse.quote(ysym)))
+        d = json.loads(_ofetch("https://query2.finance.yahoo.com/v6/finance/recommendationsbysymbol/" + urllib.parse.quote(ysym)))
         syms = [x["symbol"] for x in d["finance"]["result"][0]["recommendedSymbols"] if x["symbol"].endswith((".NS", ".BO"))][:6]
         out = []
         for s in syms:
