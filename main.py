@@ -361,6 +361,19 @@ def yjson(url):
     c = ycrumb()
     return json.loads(_ofetch(url + ("&" if "?" in url else "?") + "crumb=" + urllib.parse.quote(c)))
 
+import http.cookiejar
+_nj = {"op": None, "t": 0}
+def nget(url, timeout=20):
+    if not _nj["op"] or time.time() - _nj["t"] > 600:
+        cj = http.cookiejar.CookieJar()
+        op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+        h = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36", "Accept-Language": "en-US,en;q=0.9"}
+        try: op.open(urllib.request.Request("https://www.nseindia.com/", headers=h), timeout=15).read()
+        except Exception: pass
+        _nj["op"], _nj["t"], _nj["h"] = op, time.time(), h
+    h = dict(_nj["h"]); h["Referer"] = "https://www.nseindia.com/"; h["Accept"] = "application/json"
+    return _nj["op"].open(urllib.request.Request(url, headers=h), timeout=timeout).read()
+
 def nse(path, ttl=60):
     def go():
         return json.loads(get("https://www.nseindia.com/api/" + path, 20))
@@ -708,6 +721,13 @@ class H(BaseHTTPRequestHandler):
                 return self.send(200, json.dumps([x for x in r if x]))
             if p in ROUTES:
                 return self.send(200, json.dumps(ROUTES[p](q)))
+            if p == "/api/dbg":
+                out = {}
+                for k, u in (("idx50", "equity-stockIndices?index=NIFTY%2050"), ("idx500", "equity-stockIndices?index=NIFTY%20500"), ("q", "quote-equity?symbol=TCS"), ("cg", "chart-databyindex?index=TCSEQN"), ("hist", "historical/cm/equity?symbol=TCS&series=%5B%22EQ%22%5D&from=01-09-2026&to=02-10-2026")):
+                    for mode, fn in (("plain", lambda x: get(x, 15)), ("cookie", nget)):
+                        try: out[k + ":" + mode] = fn("https://www.nseindia.com/api/" + u)[:150].decode("utf8", "replace")
+                        except Exception as e: out[k + ":" + mode] = repr(e)[:100]
+                return self.send(200, json.dumps(out))
             if p == "/api/status":
                 return self.send(200, json.dumps({"ok": True, "now": time.time(), "err": STATE.get("err"), "yblocked": time.time() < _block_until[0]}))
             return self.send(404, "not found", "text/plain")
