@@ -124,11 +124,11 @@ const hold=k=>{try{return JSON.parse(localStorage.getItem('nx_h_'+k))}catch(e){r
 const setHold=(k,v)=>{try{localStorage.setItem('nx_h_'+k,JSON.stringify(v))}catch(e){}};
 function momHTML(key,title,lst,compact){if(!lst||!lst.length)return `<div class="card mom"><div class="tag"><span>${esc(title)}</span></div><div class="empty" style="color:#99f6e4">No clear momentum pick right now.</div></div>`;
 let h=hold(key);let x=h&&lst.find(y=>y.symbol===h.symbol);if(!x){x=lst[0];setHold(key,{symbol:x.symbol,at:Date.now()});h=hold(key)}
-const s=sgn(x.pct);const t=new Date(h.at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+const s=sgn(x.pct);const hd=new Date(h.at);const t=(hd.toDateString()===new Date().toDateString()?'':hd.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+', ')+hd.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});const pt=x.time?new Date(x.time*1000).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
 return `<div class="card mom" id="mom-${esc(key)}"><div class="tag"><span>${esc(title)}</span><span>score ${x.score}/100</span></div>
 <div class="big" onclick="location.hash='#/stock/${esc(x.symbol.replace('.NS',''))}'"><div class="nm">${esc(x.symbol.replace('.NS',''))}<small>${esc(x.name||'')}</small></div><div class="pr">${f(x.price)}<span class="${s}">${x.pct>=0?'▲ +':'▼ '}${f(x.pct)}%</span></div></div>
 <div class="meter"><i style="width:${x.score}%"></i></div>${compact?'':`<ul>${(x.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join('')||'<li>Ranks highest on a mix of volume, gap and closeness to the day high</li>'}</ul>`}
-<button onclick="refMom('${esc(key)}')">Refresh pick</button> <span class="sm" style="color:#99f6e4;margin-left:6px">Held since ${t}${compact?'':'. Stays until you tap refresh.'}</span>
+<button onclick="refMom('${esc(key)}')">Refresh pick</button> <span class="sm" style="color:#99f6e4;margin-left:6px">Picked ${t}${compact?'':'. Stays until you tap refresh.'}</span>${pt?`<div class="sm" style="margin-top:4px;color:#99f6e4">Price as of ${pt} (delayed)</div>`:''}
 ${compact?'':`<div class="fine">A momentum pick is the stock that scores highest on simple rules (volume, opening gap, closeness to the day high). It is a watchlist idea to study, not a buy or sell signal or a prediction. Delayed data. Intraday trading carries high risk.</div>`}</div>`}
 window.refMom=async k=>{setHold(k,null);localStorage.removeItem('nx_h_'+k);await getPicks(true);route()};
 /* ===== pages ===== */
