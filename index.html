@@ -66,6 +66,46 @@ footer{color:var(--mut);font-size:12px;padding:10px 0 30px}footer p{margin:6px 0
 @media(min-width:900px){body{padding-bottom:0}.bn{display:none}}
 @media(max-width:899px){nav.main{display:none}.right .hide{display:none}}
 @media(max-width:600px){.g4{grid-template-columns:1fr 1fr}.ic .p{font-size:18px}.hero .px{font-size:28px}.logo{font-size:17px}.mom .nm{font-size:21px}}
+
+/* ===== v2 lively theme ===== */
+:root{--c1:#6366f1;--c2:#ec4899;--c3:#f59e0b;--c4:#06b6d4;--g-up:linear-gradient(135deg,#065f46,#10b981);--g-dn:linear-gradient(135deg,#9f1239,#fb7185)}
+body{background:radial-gradient(1200px 500px at 10% -5%,#6366f133,transparent 60%),radial-gradient(900px 500px at 100% 0,#ec489926,transparent 55%),var(--bg)}
+[data-theme=light] body{background:radial-gradient(1000px 420px at 0 -5%,#6366f122,transparent 60%),radial-gradient(800px 420px at 100% 0,#ec489918,transparent 55%),var(--bg)}
+header{background:linear-gradient(90deg,#1e1b4bee,#0f3d5eee 55%,#0b4f4aee);border-bottom:0;box-shadow:0 6px 24px #0005}
+[data-theme=light] header{background:linear-gradient(90deg,#4338cae6,#0369a1e6 55%,#0f766ee6)}
+header .logo,header nav.main a,header .right{color:#fff}header nav.main a{color:#cbd5e1}header nav.main a.on{background:#ffffff26;color:#fff;box-shadow:none}
+.logo b{background:linear-gradient(90deg,#fde68a,#f9a8d4);-webkit-background-clip:text;background-clip:text}
+.sbox input{background:#ffffff1f;border-color:#ffffff33;color:#fff}.sbox input::placeholder{color:#e2e8f0aa}.ib{background:#ffffff1f;border-color:#ffffff33;color:#fff}
+.ticker{background:#0b1220}
+h2{position:relative;padding-left:12px;font-size:17px}h2:before{content:"";position:absolute;left:0;top:3px;bottom:3px;width:4px;border-radius:4px;background:linear-gradient(180deg,var(--c1),var(--c2))}
+.card{border-radius:18px}
+.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0 4px}
+.qa a{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:16px;color:#fff;text-decoration:none;font-size:11.5px;font-weight:600;box-shadow:0 6px 16px #0004;cursor:pointer;text-align:center}
+.qa a i{font-style:normal;font-size:22px;background:#ffffff2e;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.qa a:nth-child(1){background:linear-gradient(135deg,#6366f1,#8b5cf6)}.qa a:nth-child(2){background:linear-gradient(135deg,#ec4899,#f43f5e)}.qa a:nth-child(3){background:linear-gradient(135deg,#f59e0b,#f97316)}.qa a:nth-child(4){background:linear-gradient(135deg,#06b6d4,#3b82f6)}
+.qa a:nth-child(5){background:linear-gradient(135deg,#10b981,#059669)}.qa a:nth-child(6){background:linear-gradient(135deg,#a855f7,#d946ef)}.qa a:nth-child(7){background:linear-gradient(135deg,#eab308,#f59e0b)}.qa a:nth-child(8){background:linear-gradient(135deg,#14b8a6,#0ea5e9)}
+.pulse{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:4px 0 6px;margin:0 -16px;padding-left:16px;padding-right:16px;scroll-snap-type:x mandatory}
+.pulse::-webkit-scrollbar{display:none}
+.pc{flex:0 0 150px;scroll-snap-align:start;border-radius:18px;padding:12px;color:#fff;cursor:pointer;box-shadow:0 8px 20px #0005}
+.pc.t-up{background:linear-gradient(145deg,#047857,#10b981)}.pc.t-dn{background:linear-gradient(145deg,#be123c,#fb7185)}.pc.t-n{background:linear-gradient(145deg,#334155,#64748b)}
+.pc .n{font-size:12px;opacity:.9}.pc .p{font-size:19px;font-weight:800;margin:2px 0;letter-spacing:-.3px}.pc .c{font-size:12.5px;font-weight:700;background:#ffffff2e;display:inline-block;padding:2px 8px;border-radius:999px}
+.pc svg{width:100%;height:30px;margin-top:6px}.pc svg *{stroke:#fff!important}.pc svg polygon{fill:#fff!important;opacity:.18!important}
+.ic{border-width:0;position:relative;overflow:hidden}
+.ic.t-up{background:linear-gradient(160deg,var(--card),#10b9812e)}.ic.t-dn{background:linear-gradient(160deg,var(--card),#f43f5e2e)}
+.ic:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}.ic.t-up:before{background:var(--up)}.ic.t-dn:before{background:var(--dn)}
+.ic .p{font-size:21px}
+.mom{background:linear-gradient(135deg,#4f46e5,#7c3aed 45%,#db2777);border:0;box-shadow:0 12px 30px #7c3aed55}
+.mom .tag{color:#fde68a}.mom .meter i{background:linear-gradient(90deg,#fde047,#fb923c)}.mom button{background:#fff;color:#4c1d95}.mom .nm small,.mom ul,.mom .fine{color:#ede9fe}.mom .sm{color:#ede9fe!important}.mom .up{color:#bbf7d0}.mom .dn{color:#fecdd3}
+.pro{background:linear-gradient(135deg,#f59e0b,#ef4444)}.pro p{color:#fff7ed}.pro button{color:#9a3412}
+.aff{background:linear-gradient(135deg,#0ea5e9,#6366f1)}.aff p{color:#e0f2fe}
+.gl{border:0;position:relative;overflow:hidden}.gl.gup{background:linear-gradient(180deg,#10b98122,var(--card) 60%);box-shadow:inset 0 3px 0 var(--up),var(--shadow)}.gl.gdn{background:linear-gradient(180deg,#f43f5e22,var(--card) 60%);box-shadow:inset 0 3px 0 var(--dn),var(--shadow)}
+.hc{border-radius:14px;color:#fff;text-shadow:0 1px 2px #0004;box-shadow:0 4px 12px #0003}
+.pill.up{background:#22c55e;color:#fff}.pill.dn{background:#f43f5e;color:#fff}
+.bar{height:12px}.bar i:first-child{background:linear-gradient(90deg,#059669,#34d399)!important}.bar i:last-child{background:linear-gradient(90deg,#fb7185,#e11d48)!important}
+.tabs button.on{background:linear-gradient(90deg,var(--c1),var(--c2));color:#fff}
+.bn{background:color-mix(in srgb,var(--card) 94%,transparent);box-shadow:0 -6px 20px #0004}.bn a.on{color:var(--c2);font-weight:700}
+.delay{background:linear-gradient(90deg,#f59e0b33,#ec489922)}
+@media(min-width:900px){.qa{grid-template-columns:repeat(8,1fr)}.pc{flex-basis:200px}}
 .skel{height:80px;border-radius:14px;background:linear-gradient(90deg,var(--card),var(--card2),var(--card));background-size:200% 100%;animation:sk 1.2s infinite}@keyframes sk{to{background-position:-200% 0}}
 </style></head><body>
 <header><div class="wrap"><div class="top"><div class="logo" onclick="go('home')">Nexora <b>Markets</b></div>
@@ -116,7 +156,7 @@ document.addEventListener('click',e=>{if(!e.target.closest('.sbox'))$('sug').hid
 const AD=(s)=>`<div class="ad" data-slot="${s}">Advertisement</div>`;
 const AFF=`<div class="card aff"><div><b>Open a free demat account</b><p>Partner offer placeholder. Compare brokers by fees before you choose. Nexora may earn a commission.</p></div><a href="#/learn">Learn first</a></div>`;
 const PRO=`<div class="card pro"><div><b>Nexora Pro (coming soon)</b><p>Price alerts, saved screens, more stocks in every scan and an ad-free view.</p></div><button onclick="alert('Pro is coming soon. We will announce it here.')">Notify me</button></div>`;
-function idxCard(x,link){const s=sgn(x.change);return `<div class="card ic" ${link?`onclick="${link}"`:''}><div class="n">${esc(x.name)}</div><div class="p">${f(x.price)}</div><div class="${s}">${arrow(x.change)} ${f(Math.abs(x.change||0))} (${f(Math.abs(x.pct||0))}%)</div>${spark(x.spark,s==='up')}</div>`}
+function idxCard(x,link){const s=sgn(x.change);return `<div class="card ic t-${s}" ${link?`onclick="${link}"`:''}><div class="n">${esc(x.name)}</div><div class="p">${f(x.price)}</div><div class="${s}">${arrow(x.change)} ${f(Math.abs(x.change||0))} (${f(Math.abs(x.pct||0))}%)</div>${spark(x.spark,s==='up')}</div>`}
 function stkTable(a,cols){return `<div class="scroll"><table><thead><tr><th>Stock</th><th>Price</th><th>Change</th>${(cols||[]).map(c=>`<th>${c[0]}</th>`).join('')}</tr></thead><tbody>`+a.map(x=>`<tr class="lk" onclick="location.hash='#/stock/${esc(x.symbol.replace('.NS',''))}'"><td class="sym">${esc(x.symbol.replace('.NS',''))}${x.name&&x.name!==x.symbol?`<span class="sub">${esc(x.name)}</span>`:''}</td><td>${f(x.price)}</td><td>${pill(x.pct)}</td>${(cols||[]).map(c=>`<td>${c[1](x)}</td>`).join('')}</tr>`).join('')+'</tbody></table></div>'}
 /* momentum cards */
 let PICKS=null;async function getPicks(force){if(!PICKS||force){try{PICKS=await j('/api/picks')}catch(e){}}return PICKS}
@@ -136,14 +176,16 @@ window.refMom=async k=>{setHold(k,null);localStorage.removeItem('nx_h_'+k);await
 function tvTheme(){return document.documentElement.getAttribute('data-theme')==='light'?'light':'dark'}
 function tvEmbed(el,src,cfg,label){if(!el)return;const th=tvTheme();el.innerHTML='<div class="tradingview-widget-container" style="height:100%"><div class="tradingview-widget-container__widget" style="height:100%"></div><div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span style="color:var(--mut);font-size:11px">'+(label||'Quotes and charts by TradingView')+'</span></a></div></div>';const sc=document.createElement('script');sc.type='text/javascript';sc.async=true;sc.src=src;sc.innerHTML=JSON.stringify(Object.assign({colorTheme:th,theme:th},cfg));el.querySelector('.tradingview-widget-container').appendChild(sc);}
 const R={};
-R.home=async el=>{el.innerHTML=`<div id="tvt" style="margin-top:14px"></div><h2 style="margin-top:16px">Top momentum stock <small>Nifty 50 scan</small></h2><div id="hm">${skel(1)}</div><h2>Indian indices <small id="u1"></small></h2><div class="grid g4" id="idx">${skel(4)}</div>
+const QA=[['markets','Markets','📊'],['screens','Screens','🎯'],['fno','F&O','⚙️'],['ipo','IPO','🚀'],['fiidii','FII / DII','🏦'],['funds','Funds','💼'],['world','World','🌍'],['commodities','Commodity','🛢️']];
+const pcard=x=>{const s=x.change>0?'up':x.change<0?'dn':'n';return `<div class="pc t-${s}" onclick="go('markets')"><div class="n">${esc(x.name)}</div><div class="p">${f(x.price)}</div><span class="c">${s==='up'?'▲':s==='dn'?'▼':''} ${f(Math.abs(x.pct||0))}%</span>${spark(x.spark,s==='up')}</div>`};
+R.home=async el=>{el.innerHTML=`<div id="tvt" style="margin-top:14px"></div><div class="qa">${QA.map(q=>`<a onclick="go('${q[0]}')"><i>${q[2]}</i>${q[1]}</a>`).join('')}</div><h2 style="margin-top:18px">Market pulse <small id="u0">swipe</small></h2><div class="pulse" id="pulse">${skel(3)}</div><h2 style="margin-top:16px">Top momentum stock <small>Nifty 50 scan</small></h2><div id="hm">${skel(1)}</div><h2>Indian indices <small id="u1"></small></h2><div class="grid g4" id="idx">${skel(4)}</div>
 ${PRO}<h2>Global momentum picks <small>one per market, held until you refresh</small></h2><div class="grid g3" id="gm">${skel(3)}</div>
 ${AD('home-1')}<h2>Market breadth <small>NSE all indices</small></h2><div class="card"><div class="bar" id="bar"></div><div id="breadth" class="sm"></div></div>
-<div class="grid g2"><div><h2>Top gainers <small>Nifty 50</small></h2><div class="card" id="gain">${skel(3)}</div></div><div><h2>Top losers <small>Nifty 50</small></h2><div class="card" id="lose">${skel(3)}</div></div></div>
+<div class="grid g2"><div><h2>Top gainers <small>Nifty 50</small></h2><div class="card gl gup" id="gain">${skel(3)}</div></div><div><h2>Top losers <small>Nifty 50</small></h2><div class="card gl gdn" id="lose">${skel(3)}</div></div></div>
 <h2>Sector heatmap</h2><div class="heat" id="heat"></div>${AFF}
 <div class="grid g2"><div><h2>FII / DII activity <small>latest session</small></h2><div class="card" id="fd">${skel(1)}</div></div><div><h2>Latest market news</h2><div class="card news" id="nw">${skel(3)}</div></div></div>`;
 tvEmbed($('tvt'),'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js',{symbols:[{proName:'BSE:SENSEX',title:'Sensex'},{proName:'BSE:RELIANCE',title:'Reliance'},{proName:'BSE:TCS',title:'TCS'},{proName:'BSE:INFY',title:'Infosys'},{proName:'FX_IDC:USDINR',title:'USD / INR'},{proName:'TVC:GOLD',title:'Gold'},{proName:'TVC:USOIL',title:'Crude Oil (WTI)'},{proName:'NASDAQ:AAPL',title:'Apple'},{proName:'NASDAQ:MSFT',title:'Microsoft'}],showSymbolLogo:true,isTransparent:true,displayMode:'adaptive',locale:'en'},'Ticker by TradingView - delayed data');
-j('/api/indices').then(d=>{$('idx').innerHTML=d.india.map(x=>idxCard(x,"go('markets')")).join('')||un;$('u1').textContent=d.asof?'Updated '+ist(d.asof):''}).catch(()=>$('idx').innerHTML=un);
+j('/api/indices').then(d=>{$('pulse').innerHTML=[...d.india.slice(0,6),...d.world.slice(0,3),...d.commod.slice(0,2)].map(pcard).join('');$('idx').innerHTML=d.india.map(x=>idxCard(x,"go('markets')")).join('')||un;$('u1').textContent=d.asof?'Updated '+ist(d.asof):''}).catch(()=>$('idx').innerHTML=un);
 getPicks().then(p=>{if(!p){$('hm').innerHTML=un;$('gm').innerHTML=un;return}$('hm').innerHTML=momHTML('India','Momentum watchlist pick - India',p.markets.India);$('gm').innerHTML=Object.keys(p.markets).filter(k=>k!=='India').map(k=>momHTML(k,k,p.markets[k],true)).join('')||un});
 j('/api/movers2?g=NIFTY').then(d=>{$('gain').innerHTML=stkTable(d.gainers.slice(0,6));$('lose').innerHTML=stkTable(d.losers.slice(0,6))}).catch(()=>{$('gain').innerHTML=un;$('lose').innerHTML=un});
 j('/api/nse/indices').then(d=>{const a=+d.advances||0,b=+d.declines||0,t=a+b||1;$('bar').innerHTML=`<i style="width:${a/t*100}%;background:var(--up)"></i><i style="width:${b/t*100}%;background:var(--dn)"></i>`;$('breadth').innerHTML=`<b class="up">${a} indices up</b> &middot; <b class="dn">${b} down</b>`;
@@ -294,7 +336,7 @@ try{const d=await j('/api/quote?s='+encodeURIComponent(wl.join(',')));const m={}
 R.news=async el=>{el.innerHTML=`<h1>Market news</h1>${AD('news-1')}<div class="card news" id="nw">${skel(3)}</div>`;j('/api/news').then(d=>$('nw').innerHTML=d.slice(0,30).map(newsRow).join('')).catch(()=>$('nw').innerHTML=un)};
 R.learn=async el=>{el.innerHTML=`<h1>Market basics in plain words</h1><div class="card"><dl class="learn"><dt>Nifty 50 and Sensex</dt><dd>Two scoreboards. When most big companies rise, they rise.</dd><dt>Gainers and losers</dt><dd>Stocks that rose or fell the most compared with yesterday's close.</dd><dt>Day high and day low</dt><dd>The highest and lowest price a stock touched today. Near the high, buyers are in control today. Near the low, sellers are.</dd><dt>Volume and volume buzz</dt><dd>Volume is how many shares changed hands. Volume buzz compares it with the usual amount at the same time of day. 2x means twice the normal activity.</dd><dt>Gap up and gap down</dt><dd>When a stock opens well above or below yesterday's close, often after news.</dd><dt>Momentum pick</dt><dd>The stock that scores highest on simple rules: volume, opening gap, closeness to the day high and day gain. It is a watchlist idea to study, not a signal to buy.</dd><dt>PE ratio</dt><dd>Price paid for each rupee of yearly profit. Compare it with similar companies.</dd><dt>52-week high and low</dt><dd>The highest and lowest prices in the last year.</dd><dt>FII and DII</dt><dd>Foreign and domestic institutional investors. Their daily buying and selling is closely watched.</dd><dt>IPO</dt><dd>When a company first sells shares to the public.</dd><dt>Futures and options</dt><dd>Contracts that follow a stock or index. They use leverage, so losses can be bigger than the money you put in.</dd><dt>Open interest and PCR</dt><dd>Open interest is the number of open contracts. PCR is puts divided by calls, a rough mood gauge.</dd><dt>NAV, CAGR and SIP</dt><dd>NAV is the price of a mutual fund unit. CAGR is the average yearly growth rate. SIP is investing a fixed amount every month.</dd><dt>VIX</dt><dd>The fear gauge. A high India VIX means traders expect big swings.</dd></dl></div>${PRO}`};
 /* ticker */
-async function tick(){try{const d=await j('/api/indices');const h=[...d.india.slice(0,5),...d.world.slice(0,4),...d.commod.slice(0,3)].map(x=>`<span><b>${esc(x.name)}</b> ${f(x.price)} <span class="${sgn(x.change)}">${arrow(x.change)} ${f(Math.abs(x.pct||0))}%</span></span>`).join('');$('tick').firstElementChild.innerHTML=h+h}catch(e){}}
+async function tick(){try{const d=await j('/api/indices');const h=[...d.india.slice(0,5),...d.world.slice(0,4),...d.commod.slice(0,3)].map(x=>`<span><b>${esc(x.name)}</b> ${f(x.price)} <span class="${sgn(x.change)}">${arrow(x.change)} ${f(Math.abs(x.pct||0))}%</span></span>`).join('');$('tick').firstElementChild.innerHTML=h+h;const dl=document.querySelector('.delay');if(dl)dl.innerHTML='Delayed data, not live. '+(d.asof?'Last updated '+ist(d.asof)+'. ':'')+'For information only. Nothing here is a recommendation to buy or sell.'}catch(e){}}
 /* router */
 function route(){const h=(location.hash||'#/home').replace(/^#\//,'').split('/');const p=h[0]||'home';const fn=R[p]||R.home;
 document.querySelectorAll('nav.main a,.bn a[data-p]').forEach(a=>a.classList.toggle('on',a.dataset.p===(p==='stock'||p==='index'?'markets':p==='chart'?'world':p)));
