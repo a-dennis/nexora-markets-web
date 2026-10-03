@@ -58,15 +58,16 @@ def chart(sym, rng="1d", interval="5m"):
 import datetime
 class RateLimited(Exception): pass
 _block_until = [0]
+_chart_block_until = [0]
 
 def yget(url):
-    if time.time() < _block_until[0]:
+    if time.time() < _chart_block_until[0]:
         raise RateLimited()
     try:
         return get(url)
     except urllib.error.HTTPError as e:
         if e.code == 429:
-            _block_until[0] = time.time() + 600
+            _chart_block_until[0] = time.time() + 600
             raise RateLimited()
         raise
 
