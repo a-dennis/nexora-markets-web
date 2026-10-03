@@ -269,7 +269,7 @@ def scanner():
     nh = sorted([x for x in s if x.get("from_high") is not None and x["from_high"] > -0.3 and x["pct"] > 0.5], key=lambda x: -x["pct"])
     add("near_hi", "Near day high", "Trading within 0.3% of today's high and up 0.5%+.",
         [hit(x, "%.2f%% below today's high %.2f" % (-x["from_high"], x["high"]), x["high"]) for x in nh])
-    return {"rules": R, "asof": STATE["stocks_t"], "day": (s[0].get("day") if s else None), "universe": len(s), "market_open": market_hours(),
+    return {"rules": R, "asof": max([x.get("time") or 0 for x in s] or [0]), "fetched": STATE["stocks_t"], "day": (s[0].get("day") if s else None), "universe": len(s), "market_open": market_hours(),
             "delay_note": "Candles come from Yahoo Finance (15-minute bars). Typically 10-15 min delayed; refreshed every 5 min in market hours."}
 
 REGION = {"US": "US", "UK": "Europe", "Germany": "Europe", "Japan": "Asia", "HK": "Asia", "China": "Asia"}
