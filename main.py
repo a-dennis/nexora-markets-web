@@ -571,7 +571,7 @@ def ts_series(ysym, types):
     out = {}
     for r in d:
         t = r["meta"]["type"][0]
-        out[t] = [(x["asOfDate"], x["reportedValue"]["raw"]) for x in r.get(t, []) if x and x.get("reportedValue")]
+        out[t] = [(x["asOfDate"], x["reportedValue"]["raw"], x.get("currencyCode") or x["reportedValue"].get("currencyCode")) for x in r.get(t, []) if x and x.get("reportedValue")]
     return out
 
 def r_stock(q):
