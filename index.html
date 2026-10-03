@@ -54,7 +54,7 @@ tbody tr.lk{cursor:pointer}tbody tr.lk:hover{background:var(--card2)}.sym{font-w
 .heat{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}.hc{border-radius:12px;padding:10px 12px;cursor:default;color:#fff;font-size:12.5px;min-height:70px}.hc b{display:block;font-size:13px}.hc span{font-size:17px;font-weight:700}
 .kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.kv div{background:var(--card2);border-radius:12px;padding:10px 12px}.kv small{display:block;color:var(--mut);font-size:11.5px}.kv b{font-size:15px}
 .range{height:6px;background:var(--line);border-radius:4px;position:relative;margin:6px 0 4px}.range i{position:absolute;top:-4px;width:3px;height:14px;background:var(--brand);border-radius:2px}
-.chart{width:100%;height:280px;display:block;touch-action:none}.tt{font-size:12.5px;color:var(--mut);height:18px}
+.chart{width:100%;height:280px;display:block;touch-action:none}.tt{font-size:12.5px;color:var(--mut);min-height:18px;overflow-wrap:anywhere}
 .hero{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}.hero .px{font-size:34px;font-weight:800;letter-spacing:-.8px}.hero h1{margin:6px 0 0}
 .oi{display:inline-block;height:8px;border-radius:3px;vertical-align:middle}.ce{background:var(--dn)}.pe{background:var(--up)}tr.atm td{background:var(--card2);font-weight:700}
 .news a{display:block;padding:11px 0;border-bottom:1px solid var(--line);text-decoration:none}.news a:last-child{border:0}.news a:hover b{color:var(--brand)}.news span{color:var(--mut);font-size:12px}
@@ -170,7 +170,7 @@ async function drawChart(id,sym,ranges,def){let cur=def||ranges[0];const tabs=$(
 const load=async r=>{cur=r;tabs.innerHTML=ranges.map(x=>`<button class="${x===cur?'on':''}" data-r="${x}">${x.toUpperCase()}</button>`).join('');
 try{const d=await j(`/api/chart?s=${encodeURIComponent(sym)}&r=${r}`);if(cur!==r||!$(id))return;if(!d.points||d.points.length<2)throw 0;$(id).style.display='block';plot(id,d.points,d.prev,r);if(d.latestSession)$(id+'-tt').insertAdjacentHTML('afterbegin','Latest available trading session (delayed): ')}catch(e){if(cur!==r||!$(id))return;$(id).innerHTML='';$(id).style.display='none';$(id+'-tt').textContent='Price history unavailable from the data source. Try another range.'}};
 tabs.onclick=e=>{const b=e.target.closest('[data-r]');if(b)load(b.dataset.r)};await load(cur)}
-function plot(id,pts,prev,r){const svg=$(id);if(!pts||pts.length<2){svg.innerHTML='';return}const W=900,H=280,P={l:8,r:58,t:10,b:22};const ys=pts.map(p=>p[1]);let mn=Math.min(...ys),mx=Math.max(...ys);const pad=(mx-mn)*.08||1;mn-=pad;mx+=pad;
+function plot(id,pts,prev,r){const svg=$(id);if(!pts||pts.length<2){svg.innerHTML='';return}const W=Math.max(300,svg.clientWidth||900),H=280,P={l:8,r:58,t:10,b:22};const ys=pts.map(p=>p[1]);let mn=Math.min(...ys),mx=Math.max(...ys);const pad=(mx-mn)*.08||1;mn-=pad;mx+=pad;
 const X=i=>P.l+i/(pts.length-1)*(W-P.l-P.r),Y=v=>P.t+(1-(v-mn)/(mx-mn))*(H-P.t-P.b);
 const up=ys[ys.length-1]>=(r==='1d'&&prev?prev:ys[0]);const c=up?'#22c55e':'#f43f5e';const line=pts.map((p,i)=>X(i).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ');
 let g='';for(let k=0;k<4;k++){const v=mn+(mx-mn)*k/3;g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${W-P.r+6}" y="${Y(v)+4}" fill="var(--mut)" font-size="11">${f(v,v>1000?0:2)}</text>`}
