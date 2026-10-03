@@ -500,17 +500,39 @@ def r_chart(q):
     return cached("ch:%s:%s" % (s, r), 90 if r in ("1d", "5d") else 900, go)
 
 def _ychart(s, r, rng, iv):
-    if True:
-        raw = yget("https://query2.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s" % (urllib.parse.quote(s), rng, iv))
-        try:
-            d = json.loads(raw)["chart"]["result"][0]
-            q0 = d["indicators"]["quote"][0]; ts = d.get("timestamp") or []
-            q0["close"]
-        except Exception as e:
-            raise RuntimeError("%s :: %.140s" % (repr(e), raw))
-        pts = [[t, round(c, 2), v or 0] for t, c, v in zip(ts, q0["close"], q0["volume"]) if c is not None]
-        m = d["meta"]
-        return {"symbol": s, "range": r, "points": pts, "prev": m.get("chartPreviousClose"), "currency": m.get("currency"), "hi52": m.get("fiftyTwoWeekHigh"), "lo52": m.get("fiftyTwoWeekLow")}
+    def history(period, interval):
+        raw = yget("https://query2.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s" % (urllib.parse.quote(s), period, interval))
+        results = json.loads(raw).get("chart", {}).get("result") or []
+        if not results: raise RuntimeError("Yahoo history unavailable")
+        d = results[0]
+        quotes = d.get("indicators", {}).get("quote") or [{}]
+        q0 = quotes[0]; ts = d.get("timestamp") or []
+        closes = q0.get("close") or []; volumes = q0.get("volume") or []
+        pts = [[t, round(c, 2), (volumes[i] or 0) if i < len(volumes) else 0]
+               for i, (t, c) in enumerate(zip(ts, closes)) if t is not None and c is not None]
+        pts.sort(key=lambda p: p[0])
+        if len(pts) < 2: raise RuntimeError("Yahoo returned no usable history")
+        return d.get("meta") or {}, pts
+    latest_session = False
+    try:
+        m, pts = history(rng, iv)
+    except Exception:
+        if r != "1d": raise
+        # On weekends and exchange holidays Yahoo can return metadata only for 1d.
+        # Use real observations from the most recent trading session, never made-up points.
+        m, all_pts = history("5d", "15m")
+        offset = m.get("gmtoffset", 0)
+        session = lambda t: datetime.datetime.fromtimestamp(t + offset, datetime.timezone.utc).date()
+        last_day = session(all_pts[-1][0])
+        pts = [p for p in all_pts if session(p[0]) == last_day]
+        earlier = [p for p in all_pts if session(p[0]) < last_day]
+        m = dict(m)
+        m["chartPreviousClose"] = earlier[-1][1] if earlier else m.get("previousClose")
+        if len(pts) < 2: raise RuntimeError("Latest session has insufficient observations")
+        latest_session = True
+    return {"symbol": s, "range": r, "points": pts, "prev": m.get("chartPreviousClose"),
+            "currency": m.get("currency"), "hi52": m.get("fiftyTwoWeekHigh"),
+            "lo52": m.get("fiftyTwoWeekLow"), "source": "Yahoo Finance", "latestSession": latest_session}
 
 def nse_chart(sym, r):
     import datetime
