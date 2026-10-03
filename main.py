@@ -98,7 +98,12 @@ def intraday(sym):
     pv = [sum(x[4] for x in dd[:n]) for dd in prevd if len(dd) >= 1]
     vratio = (vol / (sum(pv) / len(pv))) if pv and sum(pv) > 0 else None
     chg = price - prev if prev else None
-    return {"symbol": sym, "name": m.get("longName") or m.get("shortName") or sym, "price": price, "prev": prev,
+    orb_hi = today[0][1]; orb_lo = today[0][2]
+    tv = sum(((x[1] or x[3]) + (x[2] or x[3]) + x[3]) / 3.0 * x[4] for x in today)
+    vwap = (tv / vol) if vol else None
+    pdh = max((x[1] for x in prevd[-1] if x[1] is not None), default=None) if prevd else None
+    pdl = min((x[2] for x in prevd[-1] if x[2] is not None), default=None) if prevd else None
+    return {"orb_hi": orb_hi, "orb_lo": orb_lo, "vwap": vwap, "pdh": pdh, "pdl": pdl, "bars": n, "symbol": sym, "name": m.get("longName") or m.get("shortName") or sym, "price": price, "prev": prev,
             "change": chg, "pct": chg / prev * 100 if prev else None, "open": op, "high": hi, "low": lo, "volume": vol,
             "gap": (op - prev) / prev * 100 if prev else None, "vratio": vratio,
             "range": (hi - lo) / prev * 100 if prev else None,
@@ -223,6 +228,88 @@ def screeners():
       "gap_down": top(sorted([x for x in s if x["gap"] is not None and x["gap"] <= -0.8], key=lambda x: x["gap"])),
       "volatile": top(sorted([x for x in s if x["range"]], key=lambda x: -x["range"])),
     }
+
+
+def scanner():
+    s = [x for x in STATE["stocks"] if x.get("pct") is not None and x.get("price")]
+    def hit(x, reason, level=None):
+        return {"symbol": x["symbol"], "name": x.get("name"), "price": x["price"], "pct": x["pct"], "reason": reason, "level": level,
+                "vratio": x.get("vratio"), "time": x.get("time")}
+    R = []
+    def add(i, t, d, lst):
+        R.append({"id": i, "title": t, "desc": d, "hits": lst[:8]})
+    up = [hit(x, "Price %.2f is above the first 15-minute high %.2f" % (x["price"], x["orb_hi"]), x["orb_hi"]) for x in s
+          if x.get("orb_hi") and x["bars"] >= 2 and x["price"] > x["orb_hi"]]
+    dn = [hit(x, "Price %.2f is below the first 15-minute low %.2f" % (x["price"], x["orb_lo"]), x["orb_lo"]) for x in s
+          if x.get("orb_lo") and x["bars"] >= 2 and x["price"] < x["orb_lo"]]
+    up.sort(key=lambda h: -h["pct"]); dn.sort(key=lambda h: h["pct"])
+    add("orb_up", "Opening range breakout (up)", "Price trades above the high of the first 15-minute candle (9:15-9:30).", up)
+    add("orb_dn", "Opening range breakdown (down)", "Price trades below the low of the first 15-minute candle.", dn)
+    g = sorted([x for x in s if x.get("gap") is not None and x["gap"] >= 1.0 and x["price"] >= x["open"]], key=lambda x: -x["gap"])
+    add("gap_up", "Gap up holding", "Opened 1% or more above the previous close and still trades at or above the open.",
+        [hit(x, "Gap %+.1f%% at open, now %+.1f%% on the day" % (x["gap"], x["pct"]), x["open"]) for x in g])
+    g = sorted([x for x in s if x.get("gap") is not None and x["gap"] <= -1.0 and x["price"] <= x["open"]], key=lambda x: x["gap"])
+    add("gap_dn", "Gap down holding", "Opened 1% or more below the previous close and still trades at or below the open.",
+        [hit(x, "Gap %+.1f%% at open, now %+.1f%% on the day" % (x["gap"], x["pct"]), x["open"]) for x in g])
+    v = sorted([x for x in s if x.get("vratio") and x["vratio"] >= 1.5], key=lambda x: -x["vratio"])
+    add("vol", "Volume surge", "Volume so far is 1.5x or more the average of the previous sessions up to the same time.",
+        [hit(x, "Volume is %.1fx the usual level for this time" % x["vratio"]) for x in v])
+    w = sorted([x for x in s if x.get("vwap") and x["price"] > x["vwap"] and x["pct"] >= 0.5 and (x.get("vratio") or 0) >= 1.2], key=lambda x: -x["pct"])
+    add("vwap_up", "Above VWAP with volume", "Price is above the day's VWAP (average price weighted by volume), up 0.5%+ and volume is 1.2x usual.",
+        [hit(x, "Price %.2f vs VWAP %.2f" % (x["price"], x["vwap"]), x["vwap"]) for x in w])
+    w = sorted([x for x in s if x.get("vwap") and x["price"] < x["vwap"] and x["pct"] <= -0.5 and (x.get("vratio") or 0) >= 1.2], key=lambda x: x["pct"])
+    add("vwap_dn", "Below VWAP with volume", "Price is below the day's VWAP, down 0.5%+ and volume is 1.2x usual.",
+        [hit(x, "Price %.2f vs VWAP %.2f" % (x["price"], x["vwap"]), x["vwap"]) for x in w])
+    p = sorted([x for x in s if x.get("pdh") and x["price"] > x["pdh"]], key=lambda x: -x["pct"])
+    add("pdh", "Above previous day high", "Price trades above yesterday's highest price.",
+        [hit(x, "Price %.2f vs previous day high %.2f" % (x["price"], x["pdh"]), x["pdh"]) for x in p])
+    p = sorted([x for x in s if x.get("pdl") and x["price"] < x["pdl"]], key=lambda x: x["pct"])
+    add("pdl", "Below previous day low", "Price trades below yesterday's lowest price.",
+        [hit(x, "Price %.2f vs previous day low %.2f" % (x["price"], x["pdl"]), x["pdl"]) for x in p])
+    nh = sorted([x for x in s if x.get("from_high") is not None and x["from_high"] > -0.3 and x["pct"] > 0.5], key=lambda x: -x["pct"])
+    add("near_hi", "Near day high", "Trading within 0.3% of today's high and up 0.5%+.",
+        [hit(x, "%.2f%% below today's high %.2f" % (-x["from_high"], x["high"]), x["high"]) for x in nh])
+    return {"rules": R, "asof": STATE["stocks_t"], "day": (s[0].get("day") if s else None), "universe": len(s), "market_open": market_hours(),
+            "delay_note": "Candles come from Yahoo Finance (15-minute bars). Typically 10-15 min delayed; refreshed every 5 min in market hours."}
+
+REGION = {"US": "US", "UK": "Europe", "Germany": "Europe", "Japan": "Asia", "HK": "Asia", "China": "Asia"}
+def scanner2(kind):
+    items = [x for x in (STATE.get("cm") if kind == "commodities" else STATE.get("wi")) or [] if x.get("pct") is not None and x.get("price")]
+    def hit(x, reason, level=None):
+        return {"symbol": x["name"], "ticker": x["symbol"], "price": x["price"], "pct": x["pct"], "reason": reason, "level": level, "time": x.get("time")}
+    R = []
+    def add(i, t, d, lst): R.append({"id": i, "title": t, "desc": d, "hits": lst[:8]})
+    def fm(v): return "%.2f" % v
+    add("orb_up", "Session range breakout (up)", "Price trades above the high of the first 15-minute candle of the latest session.",
+        sorted([hit(x, "Price %s is above the first 15-minute high %s" % (fm(x["price"]), fm(x["orb_hi"])), x["orb_hi"]) for x in items if x.get("orb_hi") and x["bars"] >= 2 and x["price"] > x["orb_hi"]], key=lambda h: -h["pct"]))
+    add("orb_dn", "Session range breakdown (down)", "Price trades below the low of the first 15-minute candle of the latest session.",
+        sorted([hit(x, "Price %s is below the first 15-minute low %s" % (fm(x["price"]), fm(x["orb_lo"])), x["orb_lo"]) for x in items if x.get("orb_lo") and x["bars"] >= 2 and x["price"] < x["orb_lo"]], key=lambda h: h["pct"]))
+    add("gap_up", "Gap up holding", "Opened 0.7% or more above the previous close and still trades at or above the open.",
+        sorted([hit(x, "Gap %+.1f%% at open, now %+.1f%%" % (x["gap"], x["pct"]), x["open"]) for x in items if x.get("gap") is not None and x["gap"] >= 0.7 and x["price"] >= x["open"]], key=lambda h: -h["pct"]))
+    add("gap_dn", "Gap down holding", "Opened 0.7% or more below the previous close and still trades at or below the open.",
+        sorted([hit(x, "Gap %+.1f%% at open, now %+.1f%%" % (x["gap"], x["pct"]), x["open"]) for x in items if x.get("gap") is not None and x["gap"] <= -0.7 and x["price"] <= x["open"]], key=lambda h: h["pct"]))
+    add("pdh", "Above previous session high", "Price trades above the previous session's highest price.",
+        sorted([hit(x, "Price %s vs previous high %s" % (fm(x["price"]), fm(x["pdh"])), x["pdh"]) for x in items if x.get("pdh") and x["price"] > x["pdh"]], key=lambda h: -h["pct"]))
+    add("pdl", "Below previous session low", "Price trades below the previous session's lowest price.",
+        sorted([hit(x, "Price %s vs previous low %s" % (fm(x["price"]), fm(x["pdl"])), x["pdl"]) for x in items if x.get("pdl") and x["price"] < x["pdl"]], key=lambda h: h["pct"]))
+    add("big", "Strong move", "Moved 1.5% or more from the previous close.",
+        sorted([hit(x, "%+.1f%% from the previous close" % x["pct"]) for x in items if abs(x["pct"]) >= 1.5], key=lambda h: -abs(h["pct"])))
+    add("near_hi", "Near session high", "Within 0.3% of the session high and up 0.5% or more.",
+        sorted([hit(x, "%.2f%% below the session high %s" % (-x["from_high"], fm(x["high"])), x["high"]) for x in items if x.get("from_high") is not None and x["from_high"] > -0.3 and x["pct"] >= 0.5], key=lambda h: -h["pct"]))
+    add("near_lo", "Near session low", "Within 0.3% of the session low and down 0.5% or more.",
+        sorted([hit(x, "%.2f%% above the session low %s" % (x["from_low"], fm(x["low"])), x["low"]) for x in items if x.get("from_low") is not None and x["from_low"] < 0.3 and x["pct"] <= -0.5], key=lambda h: h["pct"]))
+    add("vol", "Volume surge", "Volume so far is 1.5x or more the previous sessions' average at the same time (where volume is reported).",
+        sorted([hit(x, "Volume is %.1fx the usual level" % x["vratio"]) for x in items if x.get("vratio") and x["vratio"] >= 1.5], key=lambda h: -h["pct"]))
+    summ = None
+    if kind == "world":
+        g = {}
+        for x in items:
+            for k, v in REGION.items():
+                if "(%s)" % k in (x.get("name") or ""): g.setdefault(v, []).append(x["pct"])
+        summ = [{"region": k, "avg": sum(v) / len(v), "n": len(v)} for k, v in g.items()]
+    ts = [x.get("time") for x in items if x.get("time")]
+    return {"rules": R, "summary": summ, "asof": max(ts) if ts else 0, "refreshed": STATE.get("wt"), "count": len(items),
+            "delay_note": "Candles come from Yahoo Finance (15-minute bars), typically 10-15 min delayed and refreshed about every 10 min. " + ("Prices are USD futures (COMEX/NYMEX) and spot rates, not MCX rupee prices; MCX prices also depend on USD/INR and local duties." if kind == "commodities" else "Each market has its own trading hours, so closed markets show their last session.")}
 
 def mscore(x):
     if x.get("pct") is None or x["pct"] <= 0: return None
@@ -676,6 +763,7 @@ def refresh_world_picks():
     STATE["wstocks"] = out
     cm = fetch_many([(s, n) for s, n in COMMOD], 3, intraday)
     STATE["cm"] = cm
+    STATE["wi"] = fetch_many(WORLD, 3, intraday)
     STATE["wt"] = time.time()
 
 def scored(lst, k=8):
@@ -739,6 +827,8 @@ class H(BaseHTTPRequestHandler):
             if p == "/robots.txt": return self.send(200, "User-agent: *\nAllow: /\n", "text/plain")
             if p == "/api/indices": return self.send(200, json.dumps({"india": STATE["idx"], "world": STATE["world"], "commod": STATE["commod"], "asof": STATE["idx_t"]}))
             if p == "/api/screens": return self.send(200, json.dumps({"s": screeners(), "asof": STATE["stocks_t"], "day": (STATE["stocks"] or [{}])[0].get("day")}))
+            if p == "/api/scanner": return self.send(200, json.dumps(scanner()))
+            if p == "/api/scanner2": return self.send(200, json.dumps(scanner2(q.get("g", ["world"])[0])))
             if p == "/api/momentum": return self.send(200, json.dumps(momentum()))
             if p in STATIC:
                 body, ct = STATIC[p]
