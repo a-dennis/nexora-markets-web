@@ -185,11 +185,18 @@ svg.onmousemove=mv;svg.ontouchmove=mv;svg.onmouseleave=()=>{$(id+'-cx').setAttri
 /* stock page */
 const WL=()=>{try{return JSON.parse(localStorage.getItem('nexora_wl'))||[]}catch(e){return[]}};const saveWL=l=>{try{localStorage.setItem('nexora_wl',JSON.stringify(l))}catch(e){}};
 R.stock=async(el,sym)=>{sym=decodeURIComponent(sym).toUpperCase().replace('.NS','');el.innerHTML=`<div class="hero"><div><div class="sm"><a href="#/markets" style="color:var(--brand)">Markets</a> / Stocks</div><h1 id="sn">${esc(sym)}</h1><div class="sm" id="ss"></div></div><div style="text-align:right"><div class="px" id="sp">...</div><div id="sc"></div><button class="ib" id="sw" style="margin-top:6px"></button></div></div>
-<div class="card" style="margin-top:12px">${chartHTML('sch')}</div><h2 style="margin:18px 0 8px">Interactive chart <small>free TradingView widget, BSE symbols (free widgets do not stream NSE), data may be delayed</small></h2><div id="tvsi" style="margin-bottom:10px"></div><div id="tvch" style="height:480px"></div><div id="sk" class="grid" style="margin-top:12px">${skel(2)}</div>`;
+<section aria-label="TradingView stock chart" style="margin-top:12px"><h2 style="margin:0 0 8px">TradingView chart <small>BSE · free widget · data may be delayed</small></h2><div id="tvch" style="height:clamp(460px,68vh,640px)"></div><div class="sm" style="margin:10px 0">Chart uses BSE, while the price header uses NSE. Prices may differ. <button class="ib" id="chartFallbackToggle">TradingView not loading?</button></div><div class="card" id="chartFallback" hidden><h2 style="margin-top:0">Fallback price chart <small>Yahoo Finance · delayed</small></h2>${chartHTML('sch')}</div></section><div id="sk" class="grid" style="margin-top:12px">${skel(2)}</div>`;
 const upW=()=>{const l=WL().includes(sym+'.NS');$('sw').textContent=l?'★ In watchlist':'☆ Add to watchlist'};upW();$('sw').onclick=()=>{let l=WL();const k=sym+'.NS';l=l.includes(k)?l.filter(x=>x!==k):[...l,k];saveWL(l);upW()};
-drawChart('sch',sym,['1d','5d','1m','6m','1y','5y','max'],'1d');
-tvEmbed($('tvsi'),'https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js',{symbol:'BSE:'+sym,width:'100%',locale:'en',isTransparent:true},'Symbol info by TradingView - delayed data');
+const chartHost=$('tvch'),fallback=$('chartFallback'),fallbackToggle=$('chartFallbackToggle');let fallbackStarted=false;
+const showFallback=()=>{if(!chartHost.isConnected)return;fallback.hidden=false;fallbackToggle.textContent='Fallback chart shown';fallbackToggle.disabled=true;if(!fallbackStarted){fallbackStarted=true;drawChart('sch',sym,['1d','5d','1m','6m','1y','5y','max'],'1d')}};
+fallbackToggle.onclick=showFallback;
+// Cross-origin chart contents cannot be inspected. Detect a failed script or a missing iframe load,
+// and let the visitor select the fallback for an in-widget error or a blocked network.
+let frameLoaded=false;const watchFrame=()=>{const frame=chartHost.querySelector('iframe');if(!frame)return;if(frame.dataset.loadWatched)return;frame.dataset.loadWatched='1';frame.addEventListener('load',()=>{frameLoaded=true;observer.disconnect()},{once:true});frame.addEventListener('error',showFallback,{once:true})};
+const observer=new MutationObserver(watchFrame);observer.observe(chartHost,{childList:true,subtree:true});
+setTimeout(()=>{observer.disconnect();if(!frameLoaded&&chartHost.isConnected)showFallback()},20000);
 tvEmbed($('tvch'),'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js',{autosize:true,symbol:'BSE:'+sym,interval:'D',timezone:'Asia/Kolkata',style:'1',locale:'en',allow_symbol_change:true,withdateranges:true,hide_side_toolbar:false,support_host:'https://www.tradingview.com'},'Interactive chart by TradingView - delayed data');
+chartHost.querySelector('script').addEventListener('error',showFallback,{once:true});watchFrame();
 let S;try{S=await j('/api/stock?s='+encodeURIComponent(sym))}catch(e){$('sk').innerHTML=un;return}
 if(location.hash.indexOf(sym)<0)return;
 $('sn').textContent=S.name||sym;document.title=(S.name||sym)+' share price, financials and ratios | Nexora Markets';$('ss').textContent=[S.symbol,S.exchange,S.sector,S.industry].filter(Boolean).join(' · ');
