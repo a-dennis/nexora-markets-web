@@ -824,8 +824,19 @@ class H(BaseHTTPRequestHandler):
             if p in ("/", "/index.html"):
                 return self.send(200, open(os.path.join(HERE, "index.html"), "rb").read(), "text/html", "public, max-age=60")
             if p == "/healthz": return self.send(200, "ok", "text/plain")
-            if p == "/robots.txt": return self.send(200, "User-agent: *\nAllow: /\n", "text/plain")
-            if p == "/api/indices": return self.send(200, json.dumps({"india": STATE["idx"], "world": STATE["world"], "commod": STATE["commod"], "asof": STATE["idx_t"]}))
+            if p == "/robots.txt": return self.send(200, "User-agent: *\nAllow: /\nSitemap: https://nexora-markets-web.onrender.com/sitemap.xml\n", "text/plain")
+            if p == "/api/indices":
+                nw = time.time(); ist_m = ((datetime.datetime.utcnow() + datetime.timedelta(hours=5, minutes=30)).hour * 60 + (datetime.datetime.utcnow() + datetime.timedelta(hours=5, minutes=30)).minute)
+                live = market_hours() and ist_m >= 570
+                ind = []
+                for x in STATE["idx"]:
+                    x = dict(x); x["stale"] = bool(live and x.get("time") and nw - x["time"] > 1800); ind.append(x)
+                stk = [{"name": {"RELIANCE": "Reliance", "TCS": "TCS", "INFY": "Infosys", "HDFCBANK": "HDFC Bank", "ICICIBANK": "ICICI Bank"}[s["symbol"]], "symbol": s["symbol"], "price": s.get("price"), "change": s.get("change"), "pct": s.get("pct"), "time": s.get("time"),
+                        "stale": bool(live and s.get("time") and nw - s["time"] > 1800)} for s in STATE["stocks"] if s["symbol"] in ("RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK")]
+                return self.send(200, json.dumps({"india": ind, "world": STATE["world"], "commod": STATE["commod"], "stocks": stk, "asof": STATE["idx_t"]}))
+            if p == "/sitemap.xml":
+                base = "https://nexora-markets-web.onrender.com"
+                return self.send(200, '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + "".join("<url><loc>%s/%s</loc></url>\n" % (base, h) for h in ("", "#/markets", "#/screens", "#/world", "#/commodities", "#/funds", "#/news")) + "</urlset>\n", "application/xml", "public, max-age=3600")
             if p == "/api/screens": return self.send(200, json.dumps({"s": screeners(), "asof": STATE["stocks_t"], "day": (STATE["stocks"] or [{}])[0].get("day")}))
             if p == "/api/scanner": return self.send(200, json.dumps(scanner()))
             if p == "/api/scanner2": return self.send(200, json.dumps(scanner2(q.get("g", ["world"])[0])))
