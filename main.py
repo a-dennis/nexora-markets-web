@@ -76,6 +76,40 @@ def chart_full(sym, rng="5d", interval="15m"):
     d = json.loads(yget(url))["chart"]["result"][0]
     return d
 
+def opening_alert_data(d):
+    # Only completed NSE cash-session candles, bounded by provider quote time.
+    m = d.get("meta", {}); q = d["indicators"]["quote"][0]
+    cutoff = min(time.time(), m.get("regularMarketTime") or 0)
+    days = {}
+    for i, t in enumerate(d.get("timestamp") or []):
+        local = datetime.datetime.utcfromtimestamp(t + 19800)
+        slot = local.hour * 60 + local.minute
+        if not (555 <= slot < 930) or (slot - 555) % 15 or t + 900 > cutoff: continue
+        vals = [q.get(k, [])[i] for k in ("open", "high", "low", "close", "volume")]
+        if any(v is None for v in vals) or vals[4] <= 0: continue
+        days.setdefault(local.date().isoformat(), {})[slot] = (t, *vals)
+    keys = sorted(days)
+    if not keys: return {}
+    day = keys[-1]; cur = days[day]; prior = [days[k] for k in keys[:-1]]
+    if 555 not in cur or len(cur) < 2: return {}
+    opening = cur[555]; hi, lo = opening[2], opening[3]
+    latest = cur[max(cur)]; latest_close = latest[4]
+    found = None; previous = opening[4]
+    for slot in sorted(cur):
+        if slot == 555: continue
+        bar = cur[slot]; close = bar[4]
+        direction = "above" if close > hi and previous <= hi else "below" if close < lo and previous >= lo else None
+        base = [old[slot][5] for old in prior if slot in old]
+        ratio = bar[5] / (sum(base) / len(base)) if len(base) >= 3 and sum(base) > 0 else None
+        if direction and ratio is not None and ratio >= 1.5:
+            found = {"direction": direction, "level": hi if direction == "above" else lo,
+                     "volume_ratio": round(ratio, 2), "baseline_sessions": len(base),
+                     "event_time": bar[0] + 900, "event_close": close}
+        previous = close
+    if found and not (latest_close > hi if found["direction"] == "above" else latest_close < lo): found = None
+    return {"alert": found, "alert_day": day, "alert_high": hi, "alert_low": lo,
+            "alert_close": latest_close, "alert_data_time": latest[0] + 900}
+
 def intraday(sym):
     d = chart_full(sym)
     m = d["meta"]; off = m.get("gmtoffset", 19800)
@@ -103,7 +137,7 @@ def intraday(sym):
     vwap = (tv / vol) if vol else None
     pdh = max((x[1] for x in prevd[-1] if x[1] is not None), default=None) if prevd else None
     pdl = min((x[2] for x in prevd[-1] if x[2] is not None), default=None) if prevd else None
-    return {"orb_hi": orb_hi, "orb_lo": orb_lo, "vwap": vwap, "pdh": pdh, "pdl": pdl, "bars": n, "symbol": sym, "name": m.get("longName") or m.get("shortName") or sym, "price": price, "prev": prev,
+    return {**opening_alert_data(d), "orb_hi": orb_hi, "orb_lo": orb_lo, "vwap": vwap, "pdh": pdh, "pdl": pdl, "bars": n, "symbol": sym, "name": m.get("longName") or m.get("shortName") or sym, "price": price, "prev": prev,
             "change": chg, "pct": chg / prev * 100 if prev else None, "open": op, "high": hi, "low": lo, "volume": vol,
             "gap": (op - prev) / prev * 100 if prev else None, "vratio": vratio,
             "range": (hi - lo) / prev * 100 if prev else None,
@@ -229,6 +263,27 @@ def screeners():
       "volatile": top(sorted([x for x in s if x["range"]], key=lambda x: -x["range"])),
     }
 
+
+def intraday_alerts():
+    now = time.time(); local = datetime.datetime.utcfromtimestamp(now + 19800)
+    today = local.date().isoformat()
+    is_open = local.weekday() < 5 and 555 <= local.hour * 60 + local.minute < 930
+    stocks = STATE.get("stocks") or []
+    ready = [x for x in stocks if x.get("alert_data_time")]
+    cards = []
+    for x in ready:
+        a = x.get("alert")
+        if not a: continue
+        dt = x["alert_data_time"]
+        stale = x.get("alert_day") != today or now - dt > 1200
+        cards.append({**a, "id": "%s:%s:%s" % (x["symbol"], a["event_time"], a["direction"]),
+                      "symbol": x["symbol"], "opening_high": x["alert_high"], "opening_low": x["alert_low"],
+                      "latest_close": x["alert_close"], "data_time": dt, "day": x["alert_day"], "stale": stale})
+    cards.sort(key=lambda a: (a["stale"], -a["event_time"], -a["volume_ratio"]))
+    return {"alerts": cards, "market_open": is_open, "scanned": len(stocks), "ready": len(ready),
+            "data_time": max([x["alert_data_time"] for x in ready] or [0]), "fetched": STATE.get("stocks_t", 0),
+            "waiting_opening": is_open and local.hour * 60 + local.minute < 585,
+            "rule": "Completed 15-minute close outside the 9:15-9:30 range, with at least 1.5x volume versus the same 15-minute window on at least 3 prior sessions. Latest completed close must still be outside that side of the range."}
 
 def scanner():
     s = [x for x in STATE["stocks"] if x.get("pct") is not None and x.get("price")]
@@ -847,6 +902,7 @@ class H(BaseHTTPRequestHandler):
                 base = "https://nexora-markets-web.onrender.com"
                 return self.send(200, '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + "".join("<url><loc>%s/%s</loc></url>\n" % (base, h) for h in ("", "#/markets", "#/screens", "#/world", "#/commodities", "#/funds", "#/news")) + "</urlset>\n", "application/xml", "public, max-age=3600")
             if p == "/api/screens": return self.send(200, json.dumps({"s": screeners(), "asof": STATE["stocks_t"], "day": (STATE["stocks"] or [{}])[0].get("day")}))
+            if p == "/api/alerts": return self.send(200, json.dumps(intraday_alerts()))
             if p == "/api/scanner": return self.send(200, json.dumps(scanner()))
             if p == "/api/scanner2": return self.send(200, json.dumps(scanner2(q.get("g", ["world"])[0])))
             if p == "/api/momentum": return self.send(200, json.dumps(momentum()))
