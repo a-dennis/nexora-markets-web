@@ -311,13 +311,22 @@ def scanner2(kind):
     return {"rules": R, "summary": summ, "asof": max(ts) if ts else 0, "refreshed": STATE.get("wt"), "count": len(items),
             "delay_note": "Candles come from Yahoo Finance (15-minute bars), typically 10-15 min delayed and refreshed about every 10 min. " + ("Prices are USD futures (COMEX/NYMEX) and spot rates, not MCX rupee prices; MCX prices also depend on USD/INR and local duties." if kind == "commodities" else "Each market has its own trading hours, so closed markets show their last session.")}
 
-def mscore(x):
+def mparts(x):
     if x.get("pct") is None or x["pct"] <= 0: return None
     vr = min(x["vratio"] or 0, 4) / 4
     gap = min(max(x["gap"] or 0, 0), 3) / 3
     nh = 1 - min(max(-(x["from_high"] or 0), 0), 1.0)
     pc = min(x["pct"], 4) / 4
-    return round(100 * (0.30 * vr + 0.20 * gap + 0.30 * nh + 0.20 * pc))
+    return [
+        {"k": "Volume vs usual", "pts": round(30 * vr), "max": 30},
+        {"k": "Opening gap", "pts": round(20 * gap), "max": 20},
+        {"k": "Closeness to day high", "pts": round(30 * nh), "max": 30},
+        {"k": "Day change", "pts": round(20 * pc), "max": 20},
+    ]
+
+def mscore(x):
+    p = mparts(x)
+    return None if p is None else sum(i["pts"] for i in p)
 
 def reasons_for(x):
     r = []
@@ -770,7 +779,7 @@ def scored(lst, k=8):
     out = []
     for x in lst:
         sc = mscore(x)
-        y = dict(x); y["score"] = sc if sc is not None else 0; y["reasons"] = reasons_for(x); out.append(y)
+        y = dict(x); y["score"] = sc if sc is not None else 0; y["reasons"] = reasons_for(x); y["parts"] = mparts(x) or []; out.append(y)
     out.sort(key=lambda z: -z["score"])
     return out[:k]
 
@@ -784,7 +793,7 @@ def r_picks(q):
         pct = x.get("pct") or 0
         y["score"] = sc if sc is not None else 0
         y["state"] = "Strong upward momentum" if y["score"] >= 55 else "Mild upward momentum" if y["score"] >= 30 else "Weak or sideways" if pct > -0.5 else "Downward pressure" if pct > -1.5 else "Strong downward pressure"
-        y["reasons"] = reasons_for(x); com.append(y)
+        y["reasons"] = reasons_for(x); y["parts"] = mparts(x) or []; com.append(y)
     return {"markets": res, "commodities": com, "asof": STATE["wt"]}
 
 ROUTES = {"/api/nse/indices": r_nse_indices, "/api/movers2": r_movers, "/api/52w": r_52w, "/api/active": r_active, "/api/fiidii": r_fiidii, "/api/ipo": r_ipo,
