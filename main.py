@@ -9,9 +9,9 @@ INDICES = [("^NSEI", "Nifty 50"), ("^BSESN", "Sensex"), ("^NSEBANK", "Bank Nifty
            ("^CNXIT", "Nifty IT"), ("^INDIAVIX", "India VIX"), ("^CNXAUTO", "Nifty Auto"),
            ("^CNXFMCG", "Nifty FMCG"), ("^CNXPHARMA", "Nifty Pharma")]
 N50 = """ADANIENT ADANIPORTS APOLLOHOSP ASIANPAINT AXISBANK BAJAJ-AUTO BAJFINANCE BAJAJFINSV BEL BHARTIARTL
-CIPLA COALINDIA DRREDDY EICHERMOT ETERNAL GRASIM HCLTECH HDFCBANK HDFCLIFE HEROMOTOCO HINDALCO HINDUNILVR
-ICICIBANK INDUSINDBK INFY ITC JIOFIN JSWSTEEL KOTAKBANK LT M&M MARUTI NESTLEIND NTPC ONGC POWERGRID
-RELIANCE SBILIFE SBIN SHRIRAMFIN SUNPHARMA TATACONSUM TATAMOTORS TATASTEEL TCS TECHM TITAN TRENT ULTRACEMCO WIPRO""".split()
+CIPLA COALINDIA DRREDDY EICHERMOT ETERNAL GRASIM HCLTECH HDFCBANK HDFCLIFE MAXHEALTH HINDALCO HINDUNILVR
+ICICIBANK INDIGO INFY ITC JIOFIN JSWSTEEL KOTAKBANK LT M&M MARUTI NESTLEIND NTPC ONGC POWERGRID
+RELIANCE SBILIFE SBIN SHRIRAMFIN SUNPHARMA TATACONSUM TMPV TATASTEEL TCS TECHM TITAN TRENT ULTRACEMCO WIPRO""".split()
 
 _cache = {}
 _lock = threading.Lock()
@@ -94,18 +94,18 @@ def opening_alert_data(d):
     if 555 not in cur or len(cur) < 2: return {}
     opening = cur[555]; hi, lo = opening[2], opening[3]
     latest = cur[max(cur)]; latest_close = latest[4]
-    found = None; previous = opening[4]
+    found = None; previous = opening[4]; previous_slot = 555
     for slot in sorted(cur):
         if slot == 555: continue
         bar = cur[slot]; close = bar[4]
         direction = "above" if close > hi and previous <= hi else "below" if close < lo and previous >= lo else None
         base = [old[slot][5] for old in prior if slot in old]
         ratio = bar[5] / (sum(base) / len(base)) if len(base) >= 3 and sum(base) > 0 else None
-        if direction and ratio is not None and ratio >= 1.5:
+        if direction and slot == previous_slot + 15 and ratio is not None and ratio >= 1.5:
             found = {"direction": direction, "level": hi if direction == "above" else lo,
                      "volume_ratio": round(ratio, 2), "baseline_sessions": len(base),
                      "event_time": bar[0] + 900, "event_close": close}
-        previous = close
+        previous = close; previous_slot = slot
     if found and not (latest_close > hi if found["direction"] == "above" else latest_close < lo): found = None
     return {"alert": found, "alert_day": day, "alert_high": hi, "alert_low": lo,
             "alert_close": latest_close, "alert_data_time": latest[0] + 900}
