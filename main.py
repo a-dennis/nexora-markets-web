@@ -851,9 +851,116 @@ def r_picks(q):
         y["reasons"] = reasons_for(x); y["parts"] = mparts(x) or []; com.append(y)
     return {"markets": res, "commodities": com, "asof": STATE["wt"]}
 
+
+
+# ===================== US section (prep: SEC directory + TradingView widgets) =====================
+# Symbol directory: SEC public data. sec.gov/privacy ("Website Dissemination"): information on
+# sec.gov is public information and may be copied or further distributed; citation requested.
+# NO Yahoo or other third-party quote APIs are used for US data - display rights unresolved.
+# US prices/charts are shown client-side by official free TradingView widgets (attribution kept).
+US_DIR_URL = "https://www.sec.gov/files/company_tickers_exchange.json"
+US_DIR_FILE = os.path.join(HERE, "us_symbols_cache.json")
+UA_SEC = {"User-Agent": "NexoraMarkets/1.0 (contact: nexoraofficial82@gmail.com)"}
+TV_PREFIX = {"Nasdaq": "NASDAQ", "NYSE": "NYSE", "OTC": "OTC", "CBOE": "CBOE"}
+
+def usdir():
+    def go():
+        req = urllib.request.Request(US_DIR_URL, headers=UA_SEC)
+        d = json.loads(urllib.request.urlopen(req, timeout=20).read())
+        f = d["fields"]
+        ix = {k: f.index(k) for k in ("ticker", "name", "exchange")}
+        rows = [{"symbol": r[ix["ticker"]], "name": r[ix["name"]], "exch": r[ix["exchange"]]}
+                for r in d["data"] if r[ix["ticker"]] and r[ix["exchange"]]]
+        try:
+            with open(US_DIR_FILE, "w") as fh:
+                json.dump(rows, fh)
+        except Exception:
+            pass
+        return rows
+    try:
+        return cached("usdir", 86400, go)
+    except Exception:
+        pass
+    try:
+        with open(US_DIR_FILE) as fh:
+            return json.load(fh)
+    except Exception:
+        # Bundled offline fallback: SEC directory, gzip+base64 in 3 text parts
+        # (binary/700KB+ files cannot be committed through the web editor flow).
+        import base64 as _b64, gzip as _gz
+        b64 = "".join(open(os.path.join(HERE, f"us_dir_cache_{i}.txt")).read().strip()
+                      for i in (1, 2, 3))
+        return json.loads(_gz.decompress(_b64.b64decode(b64)).decode())
+
+# Explicitly verified TradingView symbols for instruments whose SEC-reported exchange
+# does not match TradingView's venue (NYSE Arca ETFs are reported as "NYSE" by SEC but
+# filed under AMEX by TradingView). Identity of each mapping was visually verified
+# 2026-10-28 against the widget's issuer name and exchange. No guessing beyond this list.
+TV_VERIFIED = {"SPY": "AMEX:SPY", "DIA": "AMEX:DIA", "GLD": "AMEX:GLD",
+               "QQQ": "NASDAQ:QQQ", "TLT": "NASDAQ:TLT",
+               "IVV": "AMEX:IVV", "VOO": "AMEX:VOO", "IWM": "AMEX:IWM",
+               "EEM": "AMEX:EEM", "XLF": "AMEX:XLF", "ARKK": "AMEX:ARKK"}
+# Verified ETF identities whose tickers are missing from the SEC directory entirely.
+TV_EXTRA = [
+    {"symbol": "IVV", "name": "iShares Core S&P 500 ETF", "exch": "NYSE Arca"},
+    {"symbol": "VOO", "name": "Vanguard S&P 500 ETF", "exch": "NYSE Arca"},
+    {"symbol": "IWM", "name": "iShares Russell 2000 ETF", "exch": "NYSE Arca"},
+    {"symbol": "EEM", "name": "iShares MSCI Emerging Markets ETF", "exch": "NYSE Arca"},
+    {"symbol": "XLF", "name": "Financial Select Sector SPDR Fund", "exch": "NYSE Arca"},
+    {"symbol": "ARKK", "name": "ARK Innovation ETF", "exch": "Cboe BZX"},
+    {"symbol": "QQQ", "name": "Invesco QQQ Trust", "exch": "Nasdaq"},
+    {"symbol": "TLT", "name": "iShares 20+ Year Treasury Bond ETF", "exch": "Nasdaq"},
+]
+def tv_symbol(r):
+    sym = r["symbol"]
+    if sym in TV_VERIFIED:
+        return TV_VERIFIED[sym]
+    if re.match(r"^[A-Z0-9]+-P[A-Z0-9]$", sym):
+        return None  # preferred share: widget identity unverified, show unsupported state
+    pre = TV_PREFIX.get(r["exch"])
+    return (pre + ":" if pre else "") + sym
+
+def r_ussearch(q):
+    query = (q.get("q", [""])[0] or "").strip().lower()
+    if not query or not re.match(r"^[a-z0-9 .\-&']{1,40}$", query):
+        return []
+    rows = usdir()
+    pref = [r for r in rows if r["symbol"].lower().startswith(query)]
+    names = [r for r in rows if query in r["name"].lower()]
+    out, seen = [], set()
+    for r in pref + names:
+        k = (r["symbol"], r["exch"])
+        if k in seen:
+            continue
+        seen.add(k)
+        out.append({"symbol": r["symbol"], "name": r["name"], "exch": r["exch"],
+                    "tv": tv_symbol(r), "mkt": "US"})
+        if len(out) >= 15:
+            break
+    for r in TV_EXTRA:
+        if len(out) >= 15:
+            break
+        k = (r["symbol"], r["exch"])
+        if k in seen:
+            continue
+        if r["symbol"].lower().startswith(query) or query in r["name"].lower():
+            seen.add(k)
+            out.append({"symbol": r["symbol"], "name": r["name"], "exch": r["exch"],
+                        "tv": TV_VERIFIED[r["symbol"]], "mkt": "US"})
+    return out
+
+def r_usdir(q):
+    rows = usdir()
+    return {"count": len(rows),
+            "source": "SEC " + US_DIR_URL,
+            "license": "SEC public information - may be copied or further distributed (https://www.sec.gov/privacy)",
+            "exchanges": sorted({r["exch"] for r in rows})}
+
 ROUTES = {"/api/nse/indices": r_nse_indices, "/api/movers2": r_movers, "/api/52w": r_52w, "/api/active": r_active, "/api/fiidii": r_fiidii, "/api/ipo": r_ipo,
           "/api/results": r_results, "/api/events": r_events, "/api/announce": r_announce, "/api/deals": r_deals, "/api/fno": r_fno, "/api/options": r_options,
           "/api/chart": r_chart, "/api/stock": r_stock, "/api/fin": r_fin, "/api/peers": r_peers, "/api/stocknews": r_stocknews, "/api/picks": r_picks}
+ROUTES["/api/ussearch"] = r_ussearch
+ROUTES["/api/usdir"] = r_usdir
 
 def _world_loop():
     while True:
