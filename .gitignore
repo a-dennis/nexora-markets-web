@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+tvtest*.html
+us_symbols_cache.json
