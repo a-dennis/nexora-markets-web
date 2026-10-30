@@ -111,6 +111,14 @@ td,th{padding:8px 5px;font-size:13px}th{font-size:10.5px}
 @media(min-width:900px){.pc{min-width:150px}}
 td{white-space:nowrap}td.sym{white-space:normal}.hc{filter:saturate(.75) brightness(.85)}
 @media(max-width:600px){.g4{grid-template-columns:1fr 1fr;gap:8px}.ic{padding:9px 10px}.ic .p{font-size:16px}.ic svg{height:20px}.ic div:nth-child(3){font-size:12px}.g3{grid-template-columns:1fr}.mom .nm{font-size:18px}}
+.fin{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:8px 0}
+.fin label{font-size:11.5px;color:var(--mut);display:block;margin-bottom:3px}
+.fin input{width:100%;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:var(--card2);color:var(--ink);font-size:14px}
+.btn{display:inline-block;background:var(--card2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px 14px;font-weight:600;cursor:pointer;font-size:13px}
+.btn:hover{border-color:var(--brand)}
+.bigpct{font-size:22px;font-weight:800}
+.simb{display:flex;height:14px;border-radius:5px;overflow:hidden;margin:10px 0 4px}
+.simb i{display:block;height:100%}
 .skel{height:80px;border-radius:14px;background:linear-gradient(90deg,var(--card),var(--card2),var(--card));background-size:200% 100%;animation:sk 1.2s infinite}@keyframes sk{to{background-position:-200% 0}}
 </style></head><body>
 <header><div class="wrap"><div class="top"><div class="logo" onclick="go('home')">Nexora <b>Markets</b></div>
@@ -145,7 +153,7 @@ function spark(a,up,h){if(!a||a.length<2)return'';const mn=Math.min(...a),mx=Mat
 (function(){const t=localStorage.getItem('nx_theme')||'dark';document.documentElement.dataset.theme=t;})();
 $('th').onclick=()=>{const t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;localStorage.setItem('nx_theme',t);document.querySelector('meta[name=theme-color]').content=t==='dark'?'#070d14':'#f3f6fb'};
 /* nav */
-const PAGES=[['home','Home','🏠'],['markets','Markets','📊'],['screens','Screens','🎯'],['alerts','Intraday alerts','🔔'],['scanner','Scanner','🔎'],['fno','F&O','⚙️'],['ipo','IPO','🚀'],['fiidii','FII / DII','🏦'],['calendar','Calendar','📅'],['world','World','🌍'],['commodities','Commodities','🛢️'],['funds','Mutual funds','💼'],['us','US','🇺🇸'],['watch','Watchlist','⭐'],['news','News','📰'],['learn','Learn','🎓']];
+const PAGES=[['home','Home','🏠'],['markets','Markets','📊'],['screens','Screens','🎯'],['alerts','Intraday alerts','🔔'],['scanner','Scanner','🔎'],['plan','Trade plan','📋'],['fno','F&O','⚙️'],['ipo','IPO','🚀'],['fiidii','FII / DII','🏦'],['calendar','Calendar','📅'],['world','World','🌍'],['commodities','Commodities','🛢️'],['funds','Mutual funds','💼'],['us','US','🇺🇸'],['watch','Watchlist','⭐'],['news','News','📰'],['learn','Learn','🎓']];
 $('nav').innerHTML=PAGES.map(p=>`<a data-p="${p[0]}" onclick="go('${p[0]}')">${p[1]}</a>`).join('');
 const BN=[['home','Home','🏠'],['markets','Markets','📊'],['screens','Screens','🎯'],['funds','Funds','💼']];
 $('bn').innerHTML=BN.map(p=>`<a data-p="${p[0]}" onclick="go('${p[0]}')"><i>${p[2]}</i>${p[1]}</a>`).join('')+`<a onclick="openMore()"><i>☰</i>More</a>`;
@@ -184,7 +192,7 @@ window.refMom=async k=>{setHold(k,null);localStorage.removeItem('nx_h_'+k);await
 function tvTheme(){return document.documentElement.getAttribute('data-theme')==='light'?'light':'dark'}
 function tvEmbed(el,src,cfg,label){if(!el)return;const th=tvTheme();el.innerHTML='<div class="tradingview-widget-container" style="height:100%"><div class="tradingview-widget-container__widget" style="height:100%"></div><div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span style="color:var(--mut);font-size:11px">'+(label||'Quotes and charts by TradingView')+'</span></a></div></div>';const sc=document.createElement('script');sc.type='text/javascript';sc.async=true;sc.src=src;sc.innerHTML=JSON.stringify(Object.assign({colorTheme:th,theme:th},cfg));el.querySelector('.tradingview-widget-container').appendChild(sc);}
 const R={};
-const QA=[['markets','Markets','▤'],['alerts','Intraday alerts','⌕'],['scanner','Scanner','⌕'],['screens','Screens','≣'],['fno','F&O','◫'],['ipo','IPO','◔'],['funds','Funds','◧'],['world','World','◍'],['commodities','Commodities','◈']];
+const QA=[['markets','Markets','▤'],['alerts','Intraday alerts','⌕'],['scanner','Scanner','⌕'],['screens','Screens','≣'],['plan','Trade plan','▦'],['fno','F&O','◫'],['ipo','IPO','◔'],['funds','Funds','◧'],['world','World','◍'],['commodities','Commodities','◈']];
 const pcard=x=>{const s=x.change>0?'up':x.change<0?'dn':'n';return `<div class="pc t-${s}" onclick="go('markets')"><div class="n">${esc(x.name)}</div><div class="p">${f(x.price)}</div><span class="c">${s==='up'?'▲':s==='dn'?'▼':''} ${f(Math.abs(x.pct||0))}%</span>${spark(x.spark,s==='up')}</div>`};
 R.home=async el=>{el.innerHTML=`<div class="qa">${QA.map(q=>`<a onclick="go('${q[0]}')"><i>${q[2]}</i>${q[1]}</a>`).join('')}</div><h2 style="margin-top:18px">Market pulse <small id="u0">swipe</small></h2><div class="pulse" id="pulse">${skel(3)}</div><h2 style="margin-top:16px">Top momentum stock <small>Nifty 50 scan</small></h2><div id="hm">${skel(1)}</div><h2>Indian indices <small id="u1"></small></h2><div class="grid g4" id="idx">${skel(4)}</div>
 ${AD('home-1')}<h2>Market breadth <small>NSE all indices</small></h2><div class="card"><div class="bar" id="bar"></div><div id="breadth" class="sm"></div></div>
@@ -287,7 +295,7 @@ ${ymap[name]?`<div class="card" style="margin-top:12px">${chartHTML('ich')}</div
 if(ymap[name])drawChart('ich',ymap[name],['1d','5d','1m','6m','1y','5y'],'1d')}catch(e){$('ix').innerHTML=un}};
 /* screens */
 R.alerts=async el=>{
-el.innerHTML=`<h1>Cash intraday alerts</h1><p class="how">Opening range + unusual volume. Easy-to-read observations from the stock scan.</p><div class="note warn"><b>Delayed, not live.</b> Yahoo data can arrive late or stop updating. Use your broker for current prices. These are not recommendations or predictions.</div><button id="alert-refresh" class="btn">Refresh alerts</button><div id="alert-list" style="margin-top:14px">${skel(2)}</div><details class="card" style="margin-top:14px"><summary>How does an alert qualify?</summary><p class="how">Mark the high and low from 9:15 to 9:30 IST. A later completed 15-minute candle must close outside that range, with at least 1.5x the usual volume for that same 15-minute window. We need at least 3 earlier sessions to compare. The latest completed close must still be outside the range on that side.</p><p class="sm">Only the app's stock scan list is checked. Missing candles or too little history mean no alert. A false breakout can reverse quickly. No notification permission, subscription or payment is needed.</p></details>`;
+el.innerHTML=`<h1>Cash intraday alerts</h1><p class="how">Opening range + unusual volume. Easy-to-read observations from the stock scan. <a href="#/plan" style="color:var(--brand)">Plan the trade with fixed risk &rarr;</a></p><div class="note warn"><b>Delayed, not live.</b> Yahoo data can arrive late or stop updating. Use your broker for current prices. These are not recommendations or predictions.</div><button id="alert-refresh" class="btn">Refresh alerts</button><div id="alert-list" style="margin-top:14px">${skel(2)}</div><details class="card" style="margin-top:14px"><summary>How does an alert qualify?</summary><p class="how">Mark the high and low from 9:15 to 9:30 IST. A later completed 15-minute candle must close outside that range, with at least 1.5x the usual volume for that same 15-minute window. We need at least 3 earlier sessions to compare. The latest completed close must still be outside the range on that side.</p><p class="sm">Only the app's stock scan list is checked. Missing candles or too little history mean no alert. A false breakout can reverse quickly. No notification permission, subscription or payment is needed.</p></details>`;
 $('alert-refresh').onclick=()=>R.alerts(el);
 try{const d=await j('/api/alerts');const age=d.data_time?Math.max(0,Math.floor((Date.now()/1000-d.data_time)/60)):null;
 let h=`<div class="note ${age===null||age>20?'warn':''}"><b>${d.market_open?'Market session':'Outside market hours'}</b> &middot; ${d.ready}/${d.scanned} stocks have usable completed candles.<br>Latest candle end: ${d.data_time?ist(d.data_time):'not available'}${age!==null?' ('+age+' min ago)':''}. ${!d.market_open?'Any cards below are historical, not current alerts.':age!==null&&age>20?'Data is stale. Do not treat these as current alerts.':'Data is delayed. Cards have their own timestamps.'}</div>`;
@@ -295,6 +303,102 @@ if(!d.alerts.length)h+=`<div class="card empty"><b>${d.waiting_opening?'Waiting 
 h+=`<div class="grid g2">${d.alerts.map(a=>`<div class="card" style="border-top:3px solid ${a.direction==='above'?'var(--up)':'var(--dn)'}"><div class="sm" style="margin-bottom:8px"><b>${a.stale||!d.market_open?'HISTORICAL / STALE':'DELAYED OBSERVATION'}</b></div><h3 style="line-height:1.5;margin:0 0 12px">${esc(a.symbol)} broke ${a.direction} its first-15-minute ${a.direction==='above'?'high':'low'} with ${f(a.volume_ratio,1)}x usual volume</h3><div class="kv"><div><small>Opening high</small><b>₹${f(a.opening_high)}</b></div><div><small>Opening low</small><b>₹${f(a.opening_low)}</b></div><div><small>Break candle close</small><b>₹${f(a.event_close)}</b></div><div><small>Latest completed close</small><b>₹${f(a.latest_close)}</b></div></div><p class="how" style="margin-top:12px"><b>What this means:</b> Price moved ${a.direction==='above'?'above the morning range with more trading activity than usual. The move could still reverse.':'below the morning range with more trading activity than usual. The move could still reverse.'}</p><div class="sm">Break candle ended: ${ist(a.event_time)}<br>Latest candle ended: ${ist(a.data_time)}<br>Volume compared with ${a.baseline_sessions} prior sessions at the same time.</div><div class="note warn" style="margin-bottom:0;margin-top:12px"><b>Not a recommendation.</b> This is a delayed observation, not a trading instruction.</div></div>`).join('')}</div>`;
 $('alert-list').innerHTML=h}catch(e){$('alert-list').innerHTML='<div class="note warn">Alerts could not load. Try Refresh alerts. No current data is available.</div>'}};
 
+const N50LIST="ADANIENT ADANIPORTS APOLLOHOSP ASIANPAINT AXISBANK BAJAJ-AUTO BAJFINANCE BAJAJFINSV BEL BHARTIARTL CIPLA COALINDIA DRREDDY EICHERMOT ETERNAL GRASIM HCLTECH HDFCBANK HDFCLIFE MAXHEALTH HINDALCO HINDUNILVR ICICIBANK INDIGO INFY ITC JIOFIN JSWSTEEL KOTAKBANK LT M&M MARUTI NESTLEIND NTPC ONGC POWERGRID RELIANCE SBILIFE SBIN SHRIRAMFIN SUNPHARMA TATACONSUM TMPV TATASTEEL TCS TECHM TITAN TRENT ULTRACEMCO WIPRO".split(' ');
+R.plan=async el=>{
+el.innerHTML=`<h1>Trade plan</h1><p class="how">Free discipline tools for NSE intraday (cash segment): scan the opening range, fix your risk before entry, replay the setup on past days, and get reminded to be flat on time. These are tools, not tips - nothing here tells you to buy or sell.</p>
+<div class="note warn"><b>Delayed data, not live.</b> Yahoo 15-minute candles, typically 10-15 min late and refreshed every 5 min in market hours. Confirm prices on your broker before acting.</div>
+<h2>1 &middot; Opening range scan <small id="orb-u"></small></h2>
+<p class="how">Range = the first 15-minute candle (9:15-9:30 IST). A break counts only when a later candle <b>closes</b> beyond the range - a mid-bar poke does not count. Universe: Nifty 50 only. Tap a row to load it into the calculator below.</p>
+<div class="card scroll" id="orb">${skel(1)}</div>
+<h2>2 &middot; Plan before entry <small>fill this before any trade</small></h2>
+<div class="card" id="calc"><div class="fin">
+<div><label>Symbol (your note)</label><input id="c-sym" placeholder="e.g. RELIANCE"></div>
+<div><label>Entry price &#8377;</label><input id="c-entry" type="number" step="any" inputmode="decimal"></div>
+<div><label>Stop loss &#8377;</label><input id="c-stop" type="number" step="any" inputmode="decimal"></div>
+<div><label>Target &#8377; (blank = use R)</label><input id="c-target" type="number" step="any" inputmode="decimal"></div>
+<div><label>Target in R (risk multiples)</label><input id="c-r" type="number" step="0.5" value="2" inputmode="decimal"></div>
+<div><label>Max loss per trade &#8377;</label><input id="c-ml" type="number" value="500" inputmode="numeric"></div>
+<div><label>Daily loss cap &#8377;</label><input id="c-dc" type="number" value="1500" inputmode="numeric"></div>
+<div><label>Lost so far today &#8377;</label><input id="c-dl" type="number" value="0" inputmode="numeric"></div>
+</div><div id="c-out"></div><p class="sm" style="margin:8px 0 0">Saved on this device only. This is arithmetic for your plan - it places nothing with any broker.</p></div>
+<h2>3 &middot; Time machine <small>replay this exact setup on past days</small></h2>
+<p class="how">Runs the same rules as the scan above (9:15-9:30 range, entry only on a 15-minute close beyond it, stop at the other side of the range, target at 2R) over each of the last ~60 trading days, so you can see how this setup actually behaved before trusting it.</p>
+<div class="card"><div class="fin"><div><label>NSE symbol</label><input id="tm-sym" placeholder="RELIANCE" list="tml" autocomplete="off"><datalist id="tml">${N50LIST.map(s=>`<option value="${s}">`).join('')}</datalist></div><div><label>&nbsp;</label><button class="btn" id="tm-go" style="width:100%">Run simulation</button></div></div><div id="tm-out"></div></div>
+<h2>4 &middot; Flat-by-time reminder <small>intraday square-off</small></h2>
+<p class="how">Brokers auto square-off intraday positions around 3:15-3:20 PM. Pick your own time to be flat; this page counts down to it and flags you once it passes. Works only while this page is open on this device.</p>
+<div class="card"><div class="fin"><div><label>Be flat by (IST)</label><input id="fl-t" type="time" value="15:15"></div><div><label>&nbsp;</label><div><button class="btn" id="fl-save">Save</button> <button class="btn" id="fl-nt">Enable notification</button></div></div></div><div id="fl-out" style="margin-top:10px"></div></div>`;
+const ids=['c-sym','c-entry','c-stop','c-target','c-r','c-ml','c-dc','c-dl'];
+let saved={};try{saved=JSON.parse(localStorage.getItem('nx_plan2'))||{}}catch(e){}
+function calc(){const o={};ids.forEach(i=>o[i]=$(i).value);try{localStorage.setItem('nx_plan2',JSON.stringify(o))}catch(e){}
+const entry=num($('c-entry').value),stop=num($('c-stop').value);let tgt=num($('c-target').value);const Rm=num($('c-r').value)||2,ml=num($('c-ml').value)||0,dc=num($('c-dc').value)||0,dl=num($('c-dl').value)||0;
+if(!entry||!stop||entry===stop){$('c-out').innerHTML='<div class="empty">Enter an entry price and a different stop loss.</div>';return}
+const dir=stop<entry?'long':'short',risk=Math.abs(entry-stop);
+if(!tgt)tgt=dir==='long'?entry+Rm*risk:entry-Rm*risk;
+const rew=dir==='long'?tgt-entry:entry-tgt;
+const qty=ml>0?Math.floor(ml/risk):0;
+const rr=rew/risk;
+let h=`<div class="kv" style="margin-top:12px">
+<div><small>Direction</small><b class="${dir==='long'?'up':'dn'}">${dir==='long'?'LONG (buy first)':'SHORT (sell first)'}</b></div>
+<div><small>Risk per share</small><b>&#8377;${f(risk)}</b></div>
+<div><small>Quantity (max loss &#8377;${f(ml,0)})</small><b>${qty}</b></div>
+<div><small>Position value</small><b>&#8377;${f(qty*entry,0)}</b></div>
+<div><small>Stop</small><b>&#8377;${f(stop)}</b></div>
+<div><small>Target</small><b>&#8377;${f(tgt)}</b></div>
+<div><small>Reward : risk</small><b>${f(rr,1)} : 1</b></div>
+<div><small>Max loss if stopped</small><b class="dn">-&#8377;${f(qty*risk,0)}</b></div>
+<div><small>Profit at target</small><b class="up">+&#8377;${f(qty*rew,0)}</b></div></div>`;
+if(qty===0&&ml>0)h+=`<div class="note warn"><b>Stop too wide.</b> One share risks &#8377;${f(risk)} but your per-trade limit is &#8377;${f(ml,0)} - the plan says skip this trade.</div>`;
+if(dc>0&&qty>0){const after=dl+qty*risk;
+if(dl>=dc)h+=`<div class="note warn" style="border-color:#f0505f66;background:#f0505f14;color:var(--dn)"><b>Daily cap already hit</b> (&#8377;${f(dl,0)} of &#8377;${f(dc,0)}). The plan says no more trades today.</div>`;
+else if(after>dc)h+=`<div class="note warn"><b>This trade would breach your daily cap.</b> &#8377;${f(dl,0)} lost today + &#8377;${f(qty*risk,0)} risked here > &#8377;${f(dc,0)} cap. Cut quantity or skip.</div>`;
+else h+=`<div class="note" style="margin-top:10px">Daily cap check: &#8377;${f(dl,0)} lost today + &#8377;${f(qty*risk,0)} risked here = &#8377;${f(after,0)} of &#8377;${f(dc,0)} cap. Within the plan.</div>`}
+if(rr<1.5)h+=`<div class="note warn"><b>Thin reward.</b> A reward:risk of ${f(rr,1)}:1 means you win less than you risk. Many traders skip anything below 1.5:1.</div>`;
+$('c-out').innerHTML=h}
+ids.forEach(i=>{if(saved[i]!=null)$(i).value=saved[i];$(i).addEventListener('input',calc)});
+calc();
+try{const d=await j('/api/orbscan');
+$('orb-u').textContent=(d.day?'session '+d.day+' \u00b7 ':'')+'refreshed '+(d.fetched?ist(d.fetched):'');
+if(!d.rows||!d.rows.length){$('orb').innerHTML=`<div class="empty">${d.market_open?'Waiting for the opening range and follow-up candles (earliest status about 9:45 IST, plus feed delay).':'No completed-session data available yet.'}</div>`}
+else{const stp={above:['Closed above range','up'],below:['Closed below range','dn'],inside:['Inside range','n']};
+let oh='';
+if(!d.market_open)oh+=`<div class="note">Market closed - showing the last session's completed candles${d.day?' ('+esc(d.day)+')':''}, not a live scan.</div>`;
+oh+=`<table><thead><tr><th>Stock</th><th>Latest 15m close</th><th>Range (low - high)</th><th>Status</th><th>Vol vs usual</th></tr></thead><tbody>${d.rows.map(r=>`<tr class="lk" data-s="${esc(r.symbol)}" data-e="${r.close}" data-h="${r.range_high}" data-l="${r.range_low}" data-st="${r.status}"><td class="sym">${esc(r.symbol)}<span class="sub">${esc(r.name||'')}</span></td><td>${f(r.close)}</td><td>${f(r.range_low)} - ${f(r.range_high)}</td><td><span class="pill ${stp[r.status][1]}">${stp[r.status][0]}</span>${r.break?` <span class="pill ${r.break.direction==='above'?'up':'dn'}" title="First close beyond the range also had ${f(r.break.volume_ratio,1)}x usual volume">vol break ${f(r.break.volume_ratio,1)}x</span>`:''}</td><td>${r.vratio?f(r.vratio,1)+'x':'-'}</td></tr>`).join('')}</tbody></table>${d.waiting?`<p class="sm" style="margin:8px 0 0">${d.waiting} stocks still forming the opening range or missing data.</p>`:''}`;
+$('orb').innerHTML=oh;
+$('orb').onclick=e=>{const tr=e.target.closest('tr[data-s]');if(!tr)return;$('c-sym').value=tr.dataset.s;$('c-entry').value=tr.dataset.e;$('c-stop').value=tr.dataset.st==='below'?tr.dataset.h:tr.dataset.l;$('c-target').value='';calc();$('calc').scrollIntoView({behavior:'smooth',block:'start'})};
+}}catch(e){$('orb').innerHTML='<div class="empty">Scan unavailable right now. Try again in a minute.</div>'}
+$('tm-go').onclick=async()=>{const s=($('tm-sym').value||'').trim();if(!s)return;
+$('tm-out').innerHTML='<div style="margin-top:12px">'+skel(1)+'</div>';
+try{const d=await j('/api/timemachine?s='+encodeURIComponent(s));
+if(d.error){$('tm-out').innerHTML=`<div class="empty">${esc(d.error)}</div>`;return}
+const set=d.setups||0;
+const pt=set?d.target_first/set*100:0, ps=set?d.stop_first/set*100:0, pf=set?d.flat/set*100:0;
+$('tm-out').innerHTML=`<div style="margin-top:12px"><div class="sm">${esc(d.name)} (${esc(d.symbol)}) &middot; ${d.days_analyzed} sessions, ${d.data_from} to ${d.data_to} &middot; target ${f(d.rr,1)}R</div>
+<div class="grid g4" style="margin-top:10px">
+<div class="card" style="border-top:2px solid var(--up)"><div class="sm">Target first</div><div class="bigpct up">${set?f(pt,0)+'%':'-'}</div><div class="sm">${d.target_first} of ${set} setups</div></div>
+<div class="card" style="border-top:2px solid var(--dn)"><div class="sm">Stop first</div><div class="bigpct dn">${set?f(ps,0)+'%':'-'}</div><div class="sm">${d.stop_first} of ${set} setups</div></div>
+<div class="card"><div class="sm">Neither (flat by close)</div><div class="bigpct">${set?f(pf,0)+'%':'-'}</div><div class="sm">${d.flat} of ${set} setups</div></div>
+<div class="card"><div class="sm">Avg result per setup</div><div class="bigpct ${(d.avg_r||0)>=0?'up':'dn'}">${set?((d.avg_r>0?'+':'')+f(d.avg_r,2)+'R'):'-'}</div><div class="sm">total ${d.total_r>0?'+':''}${f(d.total_r,1)}R over ${set} setups</div></div></div>
+${set?`<div class="simb"><i style="width:${pt}%;background:var(--up)"></i><i style="width:${ps}%;background:var(--dn)"></i><i style="width:${pf}%;background:var(--mut)"></i></div>`:''}
+${d.no_setup?`<div class="sm">${d.no_setup} days had no close beyond the range (no trade taken).</div>`:''}
+<div class="scroll" style="margin-top:10px"><table><thead><tr><th>Day</th><th>Side</th><th>Entry</th><th>Stop</th><th>Target</th><th>Result</th><th>R</th></tr></thead><tbody>${(d.per_day||[]).map(p=>p.result==='no_setup'?`<tr><td>${esc(p.day)}</td><td colspan="6" class="sm" style="text-align:left">no close beyond range - no trade</td></tr>`:`<tr><td>${esc(p.day)}</td><td class="${p.direction==='long'?'up':'dn'}">${p.direction} ${p.entry_time||''}</td><td>${f(p.entry)}</td><td>${f(p.stop)}</td><td>${f(p.target)}</td><td><span class="pill ${p.result==='target_first'?'up':p.result==='stop_first'?'dn':'n'}">${p.result==='target_first'?'target first':p.result==='stop_first'?'stop first':'flat'}</span></td><td>${p.r>0?'+':''}${f(p.r,2)}R</td></tr>`).join('')}</tbody></table></div>
+<div class="note warn" style="margin-top:10px"><b>Simulation of past candles - not a prediction.</b> Replays Yahoo 15-minute bars with fixed rules: entry at the bar close, stop at the range's other side, target at ${f(d.rr,1)}R. Assumes fills exactly at those prices, counts a bar touching both stop and target as a loss, and includes no brokerage, STT, slippage or gap risk. Real results will differ. This describes the past - it does not say what happens next.</div></div>`;
+}catch(e){$('tm-out').innerHTML='<div class="empty">Simulation failed to load. The data source may be busy - try again in a minute.</div>'}};
+$('fl-t').value=localStorage.getItem('nx_flattime')||'15:15';
+let flDone=false;
+function flatTick(){const t=localStorage.getItem('nx_flattime')||'15:15';const n=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));const wd=n.getDay()>0&&n.getDay()<6;
+const [hh,mm]=t.split(':').map(Number);const mins=n.getHours()*60+n.getMinutes(),tgt=hh*60+mm;
+let h='';
+if(!wd)h=`<div class="note">Today is not a trading day. The reminder runs on weekdays while this page is open. Your flat-by time is <b>${t} IST</b>.</div>`;
+else if(mins<555)h=`<div class="note">Market opens 9:15 AM. Your flat-by time is <b>${t} IST</b>.</div>`;
+else if(mins<tgt){const left=tgt-mins;h=`<div class="note"><b>${Math.floor(left/60)}h ${left%60}m left</b> to your flat-by time (${t} IST). Open intraday positions should be closed by then.</div>`}
+else if(mins<930){h=`<div class="note warn" style="border-color:#f0505f66;background:#f0505f14;color:var(--dn)"><b>Past your flat-by time (${t} IST).</b> The plan says intraday positions should be closed now. Brokers auto square-off around 3:15-3:20 PM.</div>`;
+if(!flDone&&'Notification' in window&&Notification.permission==='granted'){flDone=true;try{new Notification('Nexora flat-by time',{body:'Past '+t+' IST - your plan says be flat now.'})}catch(e){}}}
+else h=`<div class="note">Market closed for today. Your flat-by time is <b>${t} IST</b> for the next session.</div>`;
+$('fl-out').innerHTML=h}
+$('fl-save').onclick=()=>{localStorage.setItem('nx_flattime',$('fl-t').value);flatTick()};
+$('fl-nt').onclick=async()=>{try{const p=await Notification.requestPermission();$('fl-nt').textContent=p==='granted'?'Notifications on':'Not allowed by browser'}catch(e){$('fl-nt').textContent='Not supported here'}};
+flatTick();window._pt=setInterval(flatTick,20000);
+};
 let SCTAB='india';
 R.scanner=async el=>{const T=[['india','India stocks','/api/scanner'],['commodities','Commodities','/api/scanner2?g=commodities'],['world','World markets','/api/scanner2?g=world']];
 el.innerHTML=`<h1>Intraday scanner</h1><div class="note warn"><b>Read this first.</b> This scanner only lists instruments that match simple, common intraday rules. A match is not a buy or sell signal, not a prediction and not advice. Trading carries a high risk of loss. Data is delayed, so prices here can differ from your broker.</div><div class="tabs" id="sct">${T.map(t=>`<button data-k="${t[0]}" class="${t[0]===SCTAB?'on':''}">${t[1]}</button>`).join('')}</div><div id="scs">${skel(3)}</div>`;
@@ -404,7 +508,7 @@ async function tick(){try{const d=await j('/api/indices');const h=[...d.india.sl
 /* router */
 function route(){const h=(location.hash||'#/home').replace(/^#\//,'').split('/');const p=h[0]||'home';const fn=R[p]||R.home;
 document.querySelectorAll('nav.main a,.bn a[data-p]').forEach(a=>a.classList.toggle('on',a.dataset.p===(p==='stock'||p==='index'?'markets':p==='chart'?'world':p==='usstock'?'us':p)));
-window.scrollTo(0,0);document.title='Nexora Markets - Indian stock market dashboard';fn($('app'),...h.slice(1)).catch(e=>{$('app').innerHTML=un})}
+if(window._pt){clearInterval(window._pt);window._pt=null}window.scrollTo(0,0);document.title='Nexora Markets - Indian stock market dashboard';fn($('app'),...h.slice(1)).catch(e=>{$('app').innerHTML=un})}
 addEventListener('hashchange',route);
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;$('inst').style.display='inline-block'});$('inst').onclick=async()=>{if(dp){dp.prompt();await dp.userChoice;dp=null;$('inst').style.display='none'}};
