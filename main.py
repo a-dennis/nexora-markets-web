@@ -285,6 +285,121 @@ def intraday_alerts():
             "waiting_opening": is_open and local.hour * 60 + local.minute < 585,
             "rule": "Completed 15-minute close outside the 9:15-9:30 range, with at least 1.5x volume versus the same 15-minute window on at least 3 prior sessions. Latest completed close must still be outside that side of the range."}
 
+def orb_scan():
+    stocks = STATE.get("stocks") or []
+    rows = []
+    waiting = 0
+    for x in stocks:
+        hi, lo, cl = x.get("alert_high"), x.get("alert_low"), x.get("alert_close")
+        if hi is None or lo is None or cl is None:
+            waiting += 1
+            continue
+        status = "above" if cl > hi else "below" if cl < lo else "inside"
+        rows.append({"symbol": x.get("symbol"), "name": x.get("name"), "price": x.get("price"),
+                     "pct": x.get("pct"), "range_high": hi, "range_low": lo, "close": cl,
+                     "status": status, "vratio": x.get("vratio"), "break": x.get("alert"),
+                     "day": x.get("alert_day"), "data_time": x.get("alert_data_time")})
+    rank = {"above": 0, "below": 1, "inside": 2}
+    rows.sort(key=lambda r: (rank[r["status"]], -(r["pct"] or 0)))
+    return {"universe": "Nifty 50", "scanned": len(stocks), "with_range": len(rows), "waiting": waiting,
+            "rows": rows, "market_open": market_hours(), "fetched": STATE.get("stocks_t", 0),
+            "day": (rows[0].get("day") if rows else None),
+            "data_time": max([r["data_time"] for r in rows if r.get("data_time")] or [0]),
+            "rule": "Range = first 15-minute candle (9:15-9:30 IST). Status uses the latest completed 15-minute close only; a mid-bar poke beyond the range does not count. The volume-break tag marks the first close beyond the range that also had at least 1.5x usual volume. Yahoo delayed data, refreshed every 5 min in market hours."}
+
+
+def timemachine(sym, rr=2.0):
+    sym = sym.strip().upper()
+    if not re.search(r"\.(NS|BO)$", sym) and "=" not in sym and "^" not in sym:
+        sym += ".NS"
+    d = chart_full(sym, "60d", "15m")
+    m = d["meta"]; off = m.get("gmtoffset", 19800)
+    name = m.get("longName") or m.get("shortName") or sym
+    ts = d.get("timestamp") or []
+    q = d["indicators"]["quote"][0]
+    days = {}
+    for i, t in enumerate(ts):
+        c = (q.get("close") or [None] * len(ts))[i]
+        h = (q.get("high") or [None] * len(ts))[i]
+        l = (q.get("low") or [None] * len(ts))[i]
+        if c is None or h is None or l is None:
+            continue
+        local = datetime.datetime.utcfromtimestamp(t + off)
+        slot = local.hour * 60 + local.minute
+        if not (555 <= slot < 930) or (slot - 555) % 15:
+            continue
+        days.setdefault(local.date().isoformat(), {})[slot] = (h, l, c)
+    if not days:
+        raise ValueError("nodata")
+    per = []
+    for day in sorted(days):
+        bars = days[day]
+        if 555 not in bars or len(bars) < 8:
+            continue
+        or_hi, or_lo = bars[555][0], bars[555][1]
+        if or_hi <= or_lo:
+            continue
+        entry = direction = eslot = None
+        for slot in sorted(bars):
+            if slot == 555:
+                continue
+            c = bars[slot][2]
+            if c > or_hi:
+                entry, direction, eslot = c, "long", slot
+                break
+            if c < or_lo:
+                entry, direction, eslot = c, "short", slot
+                break
+        if entry is None:
+            per.append({"day": day, "result": "no_setup"})
+            continue
+        stop = or_lo if direction == "long" else or_hi
+        risk = (entry - stop) if direction == "long" else (stop - entry)
+        if risk <= 0:
+            per.append({"day": day, "result": "no_setup"})
+            continue
+        target = entry + rr * risk if direction == "long" else entry - rr * risk
+        result = "flat"; exit_price = None
+        for slot in [s for s in sorted(bars) if s > eslot]:
+            h, l = bars[slot][0], bars[slot][1]
+            if direction == "long":
+                hit_t, hit_s = h >= target, l <= stop
+            else:
+                hit_t, hit_s = l <= target, h >= stop
+            if hit_t and hit_s:
+                result, exit_price = "stop_first", stop
+                break
+            if hit_t:
+                result, exit_price = "target_first", target
+                break
+            if hit_s:
+                result, exit_price = "stop_first", stop
+                break
+        if result == "flat":
+            exit_price = bars[max(bars)][2]
+            r_mult = ((exit_price - entry) if direction == "long" else (entry - exit_price)) / risk
+        else:
+            r_mult = rr if result == "target_first" else -1.0
+        per.append({"day": day, "result": result, "direction": direction,
+                    "entry": round(entry, 2), "stop": round(stop, 2), "target": round(target, 2),
+                    "exit": round(exit_price, 2), "r": round(r_mult, 2),
+                    "entry_time": "%02d:%02d" % divmod(eslot, 60)})
+    setups = [p for p in per if p["result"] != "no_setup"]
+    n = len(setups)
+    tf = len([p for p in setups if p["result"] == "target_first"])
+    sf = len([p for p in setups if p["result"] == "stop_first"])
+    fl = len([p for p in setups if p["result"] == "flat"])
+    avg_r = sum(p["r"] for p in setups) / n if n else None
+    return {"symbol": sym, "name": name, "currency": m.get("currency"),
+            "exchange": m.get("fullExchangeName"), "rr": rr,
+            "days_analyzed": len(per), "setups": n,
+            "target_first": tf, "stop_first": sf, "flat": fl, "no_setup": len(per) - n,
+            "avg_r": round(avg_r, 2) if avg_r is not None else None,
+            "total_r": round(sum(p["r"] for p in setups), 1),
+            "data_from": sorted(days)[0], "data_to": sorted(days)[-1],
+            "per_day": per[::-1][:12], "asof": int(time.time())}
+
+
 def scanner():
     s = [x for x in STATE["stocks"] if x.get("pct") is not None and x.get("price")]
     def hit(x, reason, level=None):
@@ -1011,6 +1126,16 @@ class H(BaseHTTPRequestHandler):
             if p == "/api/screens": return self.send(200, json.dumps({"s": screeners(), "asof": STATE["stocks_t"], "day": (STATE["stocks"] or [{}])[0].get("day")}))
             if p == "/api/alerts": return self.send(200, json.dumps(intraday_alerts()))
             if p == "/api/scanner": return self.send(200, json.dumps(scanner()))
+            if p == "/api/orbscan": return self.send(200, json.dumps(orb_scan()))
+            if p == "/api/timemachine":
+                s = (q.get("s") or [""])[0].strip()
+                if not s: return self.send(400, json.dumps({"error": "Pass a symbol, e.g. /api/timemachine?s=RELIANCE"}))
+                try:
+                    return self.send(200, json.dumps(cached("tm:" + s.upper(), 6 * 3600, lambda: timemachine(s))))
+                except RateLimited:
+                    return self.send(200, json.dumps({"error": "The price data source is rate-limiting this app right now. Try again in about 10 minutes."}))
+                except Exception:
+                    return self.send(200, json.dumps({"error": "Simulation data is unavailable for this symbol right now. Check the symbol and try again."}))
             if p == "/api/scanner2": return self.send(200, json.dumps(scanner2(q.get("g", ["world"])[0])))
             if p == "/api/momentum": return self.send(200, json.dumps(momentum()))
             if p in STATIC:
